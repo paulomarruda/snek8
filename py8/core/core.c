@@ -2,31 +2,8 @@
 * @file core.c
 * @author Paulo Arruda
 * @license MIT
-* @brief Declaration of the Chip8's CPU and related emulation routines.
-*
-* @note For the implementation, we follow the following references:
-*     - Cowgod's Chip-8 Technical Reference v1.0. Accessed at
-*
-*           `http://devernay.free.fr/hacks/chip8/C8TECH10.HTM`
-*
-*     - Guide to making a CHIP-8 emulator by Tobias Langhoff. Accessed at
-*
-*           `https://tobiasvl.github.io/blog/write-a-chip-8-emulator/`
-*
-* Diferent Chip8 implementations exist regarding the following instructions:
-*     - SHR Vx {, Vy}
-*     - SHL Vx {, Vy}
-      - JP V0x0, 0x0NNN or JP V0xX, 0x0NNN
-*     - LD [I], Vx
-*     - LD Vx, [I]
-*
-* In the original COSMAC-VIP, these instructions do the following:
-*     - 0x8XY6: Shift-right the value held in VY by 1 and load the result in VX.
-*     - 0x8XYE: Shift-left the value held in VY by 1 and load the result in VX.
-*     - 0xBNNN: Jumps to the memory address 0x0NNN + V0.
-*
-* In modern implementations, these instructions do the following:
-*
+* @brief Implementation of the Python Py8 Emulator extension module.
+* @note Built with Python 3.12.
 */
 #ifndef PY8_CORE_C
     #define PY8_CORE_C
@@ -82,8 +59,6 @@ static PyMemberDef py8_emulator_members[] = {
 * ----------------------
 */
 
-
-
 /**
 * @brief C interface for the __del__ method.
 */
@@ -117,7 +92,21 @@ py8_emulatorInit(PyObject* self, PyObject* args, PyObject* kwargs){
         "implementation",
         NULL,
     };
-    if (!PyArg_VaParseTupleAndKeywords(args, kwargs, "|i", , ))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist, &mode)){
+        return -1;
+    }
+    CAST_PTR(Py8Emulator, self)->ob_is_emulating = true;
+    switch (mode) {
+        case 0:
+            py8_cpuInit(&CAST_PTR(Py8Emulator, self)->ob_cpu, PY8_IMPLM_MODE_COSMAC_VIP);
+            break;
+        case 1:
+            py8_cpuInit(&CAST_PTR(Py8Emulator, self)->ob_cpu, PY8_IMPLM_MODE_MODERN);
+            break;
+        default:
+            PyErr_Format(PyExc_ValueError, "Value %d is invalid for implementation.", mode);
+            break;
+    }
     return 0;
 }
 

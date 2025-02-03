@@ -54,7 +54,7 @@
 #define PY8_MEM_ADDR_FONTSET_START  0x50
 
 #define UNUSED(x) ((void) x)
-#define CAST_PTR(type, ptr) ((type*)ptr)
+#define CAST_PTR(type, ptr) ((type*) ptr)
 
 /**
 * @brief Controls whether the emulation step was successeful.

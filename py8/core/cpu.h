@@ -195,7 +195,9 @@ enum Py8ExecutionOutput
 py8_cpuSetKey(Py8CPU* cpu, size_t key, bool value);
 
 inline bool
-py8_cpuGetKeyVal(Py8CPU cpu, size_t key);
+py8_cpuGetKeyVal(Py8CPU cpu, size_t key){
+    return (cpu.keys & (1 << key)) == 1;
+}
 
 /*
 * @brief Function pointer representing the exectution of an opcode.
@@ -220,7 +222,7 @@ typedef struct{
 * @return The instruction contained in the `opcode`.
 */
 Py8Instruction
-chip8_getInstruction(Py8Opcode opcode);
+py8_getInstruction(Py8Opcode opcode);
 
 /**
 * @brief Execute a step in the emulation process.

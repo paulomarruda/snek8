@@ -241,10 +241,6 @@ py8_cpuSetKey(Py8CPU* cpu, size_t key, bool value){
     return PY8_EXECOUT_SUCCESS;
 }
 
-inline bool
-py8_cpuGetKeyVal(Py8CPU cpu, size_t key){
-    return (cpu.keys & (1 << key)) == 1;
-}
 
 enum Py8ExecutionOutput
 py8_cpuExecutionError(Py8CPU* cpu, Py8Opcode opcode, char* code){

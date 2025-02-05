@@ -19,6 +19,7 @@ typedef struct{
     PyObject_HEAD
     Py8CPU ob_cpu;
     bool ob_is_emulating;
+    uint32_t ob_fps;
 } Py8Emulator;
 
 PyDoc_STRVAR(PY8_STR_DOC_PY8_EMULATOR,
@@ -28,6 +29,8 @@ PyDoc_STRVAR(PY8_STR_DOC_PY8_EMULATOR,
              "----------\n"
              "is_emulating: bool\n"
              "\tControls whether the emulation process is running.\n"
+             "fps: int\n"
+             "\tFrames per second\n"
              "\n\n"
              "Parameters\n"
              "----------\n"
@@ -41,6 +44,10 @@ PyDoc_STRVAR(PY8_STR_DOC_EMULATOR_PY8_EMULATOR_IS_EMULATING,
     "Controls whether the emulation is running."
 );
 
+PyDoc_STRVAR(PY8_STR_DOC_EMULATOR_PY8_EMULATOR_FPS,
+    "Frames per second."
+);
+
 /**
 * @brief Declaration of the emulator attributes.
 */
@@ -49,8 +56,15 @@ static PyMemberDef py8_emulator_members[] = {
         .name = "is_emulating",
         .type = Py_T_BOOL,
         .offset = offsetof(Py8Emulator, ob_is_emulating),
-        .flags = 0, 
+        .flags = Py_READONLY, 
         .doc = PY8_STR_DOC_EMULATOR_PY8_EMULATOR_IS_EMULATING,
+    },
+    {
+        .name = "fps",
+        .type = Py_T_INT,
+        .offset = offsetof(Py8Emulator, ob_fps),
+        .flags = Py_READONLY, 
+        .doc = PY8_STR_DOC_EMULATOR_PY8_EMULATOR_FPS,
     },
     {NULL},
 };
@@ -89,14 +103,21 @@ py8_emulatorNew(PyTypeObject* subtype, PyObject* args, PyObject* kwargs){
 static int
 py8_emulatorInit(PyObject* self, PyObject* args, PyObject* kwargs){
     int mode = 0;
+    int fps = 30;
     char* kwlist[] = {
         "implm",
+        "fps",
         NULL,
     };
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist, &mode)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|ii", kwlist, &mode, &fps)){
         return -1;
     }
     CAST_PTR(Py8Emulator, self)->ob_is_emulating = true;
+    if (fps <= 0){
+        PyErr_Format(PyExc_ValueError, "FPS value cannot <= 0.");
+        return -1;
+    }
+    CAST_PTR(Py8Emulator, self)->ob_fps = fps;
     switch (mode) {
         case 0:
             py8_cpuInit(&CAST_PTR(Py8Emulator, self)->ob_cpu, PY8_IMPLM_MODE_COSMAC_VIP);
@@ -354,6 +375,53 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
 * EMULATION METHODS
 * ------------------
 */
+
+static PyObject*
+py8_emulatorSetFPS(PyObject* self, PyObject* args){
+    int fps;
+    if (!PyArg_ParseTuple(args, "i", &fps)){
+        return NULL;
+    }
+    if (fps <= 0){
+        PyErr_Format(PyExc_ValueError, "FPS value cannot <= 0.");
+        return NULL;
+    }
+    CAST_PTR(Py8Emulator, self)->ob_fps = fps;
+    Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_FPS,
+             "setFPS(fps: int) -> None\n"
+             "Modifies the value of the emulation's FPS.\n\n"
+             "Attributes\n"
+             "----------\n"
+             "fps: int\n"
+             "\tThe new FPS value.\n"
+);
+
+static PyObject*
+py8_emulatorIncreaseFPS(PyObject* self, PyObject* args){
+    CAST_PTR(Py8Emulator, self)->ob_fps += 10;
+    Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_INCR_FPS,
+             "increaseFPS(fps: int) -> None\n"
+             "Increases the emulation's FPS by 10.\n\n"
+);
+
+
+static PyObject*
+py8_emulatorDecreaseFPS(PyObject* self, PyObject* args){
+    CAST_PTR(Py8Emulator, self)->ob_fps -= 10;
+    Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_DECR_FPS,
+             "decreaseFPS(fps: int) -> None\n"
+             "Decreases the emulation's FPS by 10.\n\n"
+);
+
 static PyObject*
 py8_emulatorSetMode(PyObject* self, PyObject* args){
     int mode = 0;
@@ -506,6 +574,24 @@ static struct PyMethodDef py8_emulator_methods[] = {
         .ml_meth = py8_emulatorSetMode,
         .ml_flags = METH_VARARGS,
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_SET_MODE,
+    },
+    {
+        .ml_name = "setFPS",
+        .ml_meth = py8_emulatorSetFPS,
+        .ml_flags = METH_VARARGS,
+        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_SET_FPS,
+    },
+    {
+        .ml_name = "increaseFPS",
+        .ml_meth = py8_emulatorIncreaseFPS,
+        .ml_flags = METH_NOARGS,
+        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_INCR_FPS,
+    },
+    {
+        .ml_name = "decreaseFPS",
+        .ml_meth = py8_emulatorDecreaseFPS,
+        .ml_flags = METH_NOARGS,
+        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_DECR_FPS,
     },
     {
         .ml_name = "getKeyValue",

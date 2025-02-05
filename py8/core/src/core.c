@@ -7,8 +7,6 @@
 */
 #ifndef PY8_CORE_C
     #define PY8_CORE_C
-#include "pytypedefs.h"
-#include <time.h>
 #ifdef __cplusplus
     extern "C"{
 #endif
@@ -144,6 +142,7 @@ py8_emulatorGetMode(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_MODE,
+             "getMode() -> int\n"
              "Retrieve the implementation mode.\n"
              "Returns\n"
              "-------\n"
@@ -161,6 +160,7 @@ py8_emulatorGetPC(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_PC,
+             "getPC() -> int\n"
              "Retrieve the program counter.\n"
              "Returns\n"
              "-------\n"
@@ -178,6 +178,7 @@ py8_emulatorGetDT(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_DT,
+             "getDT() -> int\n"
              "Retrieve the delay timer register.\n"
              "Returns\n"
              "-------\n"
@@ -195,6 +196,7 @@ py8_emulatorGetST(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_ST,
+             "getST() -> int\n"
              "Retrieve the sound timer register.\n"
              "Returns\n"
              "-------\n"
@@ -212,6 +214,7 @@ py8_emulatorGetIR(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_IR,
+             "getIR() -> int\n"
              "Retrieve the index register.\n"
              "Returns\n"
              "-------\n"
@@ -229,6 +232,7 @@ py8_emulatorGetSP(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_SP,
+             "getSP() -> int\n"
              "Retrieve the stack pointer.\n"
              "Returns\n"
              "-------\n"
@@ -237,9 +241,13 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_SP,
 );
 
 static PyObject*
-py8_emulatorGetRegister(PyObject* self, PyObject* args){
+py8_emulatorGetRegister(PyObject* self, PyObject* args, PyObject* kwargs){
     int index = 0;
-    if (!PyArg_ParseTuple(args, "i", &index)){
+    char* kwlist[] = {
+        "index",
+        NULL,
+    };
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &index)){
         return NULL;
     }
     if (index < 0 || index >= 16){
@@ -250,7 +258,7 @@ py8_emulatorGetRegister(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTER,
-             "getRegister(index: int)\n"
+             "getRegister(index: int) -> int\n"
              "Retrieve the value of a particular all purpose register.\n\n"
              "Parameters\n"
              "----------\n"
@@ -283,6 +291,7 @@ py8_emulatorGetRegisters(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTERS,
+             "getRegisters() -> List[int]"
              "Retrieve the values of the registers.\n"
              "Returns\n"
              "-------\n"
@@ -309,6 +318,7 @@ py8_emulatorGetGraphics(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_GRAPHICS,
+             "getGraphics() -> List[bool]"
              "Retrieve the graphics list representation.\n"
              "Returns\n"
              "-------\n"
@@ -337,29 +347,34 @@ py8_emulatorGetStack(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_STACK,
+             "getStack() -> List[int]"
              "Retrieve the stack list representation.\n"
              "Returns\n"
              "-------\n"
-             "List[bool]\n"
+             "List[int]\n"
              "\tThe current value of the stack list representation."
 );
 
 static PyObject*
-py8_emulatorGetKeyValue(PyObject* self, PyObject* args){
-    int index = 0;
-    if (!PyArg_ParseTuple(args, "i", &index)){
+py8_emulatorGetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
+    int key;
+    char* kwlist[] = {
+        "index",
+        NULL,
+    };
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &key)){
         return NULL;
     }
-    if (index < 0 || index >= 16){
+    if (key < 0 || key >= 16){
         PyErr_Format(PyExc_IndexError, "Index must be between 0 and 15 (incl.). Value recieved: %d.", index);
         return NULL;
     }
-    bool value = py8_cpuGetKeyVal(CAST_PTR(Py8Emulator, self)->ob_cpu, index);
+    bool value = py8_cpuGetKeyVal(CAST_PTR(Py8Emulator, self)->ob_cpu, key);
     return value? Py_True: Py_False;
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
-             "getKeyValue(key: int)"
+             "getKeyValue(key: int) -> bool"
              "Retrieve the graphics list representation.\n"
              "Attributes\n"
              "----------\n"
@@ -367,8 +382,12 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
              "\tThe key index to be retrieved. 0 <= key <= 15\n\n"
              "Returns\n"
              "-------\n"
-             "List[bool]\n"
-             "\tThe current value of the graphic list representation."
+             "bool\n"
+             "\tThe current value of the requested key."
+             "Raises\n"
+             "------\n"
+             "IndexError\n"
+             "\tIf key is not a valid index, i.e. key < 0 or key >= 16."
 );
 
 /*
@@ -377,9 +396,13 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
 */
 
 static PyObject*
-py8_emulatorSetFPS(PyObject* self, PyObject* args){
+py8_emulatorSetFPS(PyObject* self, PyObject* args, PyObject* kwargs){
     int fps;
-    if (!PyArg_ParseTuple(args, "i", &fps)){
+    char* kwlist[] = {
+        "fps",
+        NULL,
+    };
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &fps)){
         return NULL;
     }
     if (fps <= 0){
@@ -397,35 +420,47 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_FPS,
              "----------\n"
              "fps: int\n"
              "\tThe new FPS value.\n"
+             "Raises\n"
+             "------\n"
+             "ValueError\n"
+             "\tIf the fps value is less than or equal to zero."
+
 );
 
 static PyObject*
 py8_emulatorIncreaseFPS(PyObject* self, PyObject* args){
+    UNUSED(args);
     CAST_PTR(Py8Emulator, self)->ob_fps += 10;
     Py_RETURN_NONE;
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_INCR_FPS,
-             "increaseFPS(fps: int) -> None\n"
+             "increaseFPS() -> None\n"
              "Increases the emulation's FPS by 10.\n\n"
 );
 
 
 static PyObject*
 py8_emulatorDecreaseFPS(PyObject* self, PyObject* args){
+    UNUSED(args);
     CAST_PTR(Py8Emulator, self)->ob_fps -= 10;
     Py_RETURN_NONE;
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_DECR_FPS,
-             "decreaseFPS(fps: int) -> None\n"
-             "Decreases the emulation's FPS by 10.\n\n"
+             "decreaseFPS() -> None\n"
+             "Decreases the emulation's FPS by 10 if the resulting FPS not less\n"
+             "than or equal to zero.\n"
 );
 
 static PyObject*
-py8_emulatorSetMode(PyObject* self, PyObject* args){
-    int mode = 0;
-    if (!PyArg_ParseTuple(args, "i", &mode)){
+py8_emulatorSetMode(PyObject* self, PyObject* args, PyObject* kwargs){
+    int mode;
+    char* kwlist[] = {
+        "implm",
+        NULL,
+    };
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &mode)){
         return NULL;
     }
     switch (mode) {
@@ -443,7 +478,7 @@ py8_emulatorSetMode(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_MODE,
-             "setMode(implm: int)\n"
+             "setMode(implm: int) -> None\n"
              "Modify the emulator's implementation mode.\n\n"
              "Attributes\n"
              "----------\n"
@@ -451,17 +486,26 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_MODE,
              "\tWhich implementation to use. Possible values are:\n"
              "\t\t-0: The original COSMAC-VIP implementation.\n"
              "\t\t-1: Modern implementations.\n"
-             "Returns\n"
-             "-------\n"
-             "List[bool]\n"
-             "\tThe current value of the graphic list representation."
+             "Raises\n"
+             "------\n"
+             "ValueError\n"
+             "\tIf the implm is not a valid value."
 );
 
 static PyObject*
-py8_emulatorSetKeyValue(PyObject* self, PyObject* args){
+py8_emulatorSetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
     int index = 0;
     bool value;
-    if (!PyArg_ParseTuple(args, "ib", &index, &value)){
+    char* kwlist[] = {
+        "key",
+        "value",
+        NULL,
+    };
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ib", kwlist, &index, &value)){
+        return NULL;
+    }
+    if (index < 0 || index >= 16){
+        PyErr_Format(PyExc_IndexError, "Key index must be between 0 and 15 (incl.). Value recieved: %d.", index);
         return NULL;
     }
     py8_cpuSetKey(&CAST_PTR(Py8Emulator, self)->ob_cpu, index, value);
@@ -469,24 +513,32 @@ py8_emulatorSetKeyValue(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_KEY_VALUE,
-             "setKeyValue(index, value)\n"
-             "Retrieve the graphics list representation.\n"
+             "setKeyValue(key: int, value: bool) -> None\n"
+             "Modifies a given key.\n"
              "Attributes\n"
              "----------\n"
-             "index: int\n"
-             "\tThe index to be retrieved.\n"
+             "key: int\n"
+             "\tThe index to be modified.\n"
              "value: bool\n"
-             "\tThe index to be retrieved.\n\n"
-             "Returns\n"
-             "-------\n"
-             "List[bool]\n"
-             "\tThe current value of the graphic list representation."
+             "\tThe new value of the key..\n\n"
+             "Raises\n"
+             "------\n"
+             "IndexError\n"
+             "\tIf the key index is not a valid index, i.e. key < 0 or key >= 16."
 );
 
 static PyObject*
-_py8_emulatorExecOpc(PyObject* self, PyObject* args){
+_py8_emulatorExecOpc(PyObject* self, PyObject* args, PyObject* kwargs){
     int code = 0;
-    if (!PyArg_ParseTuple(args, "i", &code)){
+    char* kwlist[] = {
+        "opcode",
+        NULL,
+    };
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &code)){
+        return NULL;
+    }
+    if (code < 0 || code >= UINT16_MAX){
+        PyErr_Format(PyExc_ValueError, "The opcode must be a valid 16-bit unsigned integer.");
         return NULL;
     }
     Py8Opcode opc = py8_opcodeInit((uint16_t) code);
@@ -496,8 +548,8 @@ _py8_emulatorExecOpc(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EXEC_OPT,
-             "_execOpc(opcode: int)\n"
-             "Execute a step in the emulation process given by the opcode.\n\n"
+             "_execOpc(opcode: int) -> int\n"
+             "Execute a step in the emulation process determined by the opcode.\n\n"
              "This function should only be used to test CPU functionallities.\n\n"
              "Attributes\n"
              "----------\n"
@@ -506,13 +558,21 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EXEC_OPT,
              "Returns\n"
              "-------\n"
              "int\n"
-             "\tThe execution output code representing whether the execution was successeful."
+             "\tThe execution output code representing whether the execution was successeful.\n"
+             "Raises\n"
+             "------\n"
+             "ValueError\n"
+             "\tIf the opcode is not a valid 16-bit unsigned integer."
 );
 
 static PyObject*
-py8_emulatorLoadRom(PyObject* self, PyObject* args){
+py8_emulatorLoadRom(PyObject* self, PyObject* args, PyObject* kwargs){
     const char* rom_filepath = NULL;
-    if (!PyArg_ParseTuple(args, "s", &rom_filepath)){
+    char* kwlist[] = {
+        "rom_filepath",
+        NULL,
+    };
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwlist, &rom_filepath)){
         return NULL;
     }
     if (!rom_filepath){
@@ -523,7 +583,7 @@ py8_emulatorLoadRom(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
-             "loadRom(rom_filepath: str)\n"
+             "loadRom(rom_filepath: str) -> int\n"
              "Load a Chip8's ROM into memory\n"
              "Attributes\n"
              "----------\n"
@@ -534,6 +594,9 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
              "int\n"
              "\tThe execution output code representing whether the execution was successeful."
 );
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 
 static struct PyMethodDef py8_emulator_methods[] = {
     {
@@ -592,26 +655,26 @@ static struct PyMethodDef py8_emulator_methods[] = {
     },
     {
         .ml_name = "getRegister",
-        .ml_meth = py8_emulatorGetRegister,
-        .ml_flags = METH_VARARGS,
+        .ml_meth = (PyCFunction) py8_emulatorGetRegister,
+        .ml_flags = METH_VARARGS | METH_KEYWORDS,
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_REGISTER,
     },
     {
         .ml_name = "loadRom",
-        .ml_meth = py8_emulatorLoadRom,
-        .ml_flags = METH_VARARGS,
+        .ml_meth = (PyCFunction) py8_emulatorLoadRom,
+        .ml_flags = METH_VARARGS | METH_KEYWORDS,
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
     },
     {
         .ml_name = "setMode",
-        .ml_meth = py8_emulatorSetMode,
+        .ml_meth = (PyCFunction) py8_emulatorSetMode,
         .ml_flags = METH_VARARGS,
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_SET_MODE,
     },
     {
         .ml_name = "setFPS",
-        .ml_meth = py8_emulatorSetFPS,
-        .ml_flags = METH_VARARGS,
+        .ml_meth = (PyCFunction) py8_emulatorSetFPS,
+        .ml_flags = METH_VARARGS | METH_KEYWORDS,
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_SET_FPS,
     },
     {
@@ -628,24 +691,25 @@ static struct PyMethodDef py8_emulator_methods[] = {
     },
     {
         .ml_name = "getKeyValue",
-        .ml_meth = py8_emulatorGetKeyValue,
-        .ml_flags = METH_VARARGS,
+        .ml_meth = (PyCFunction) py8_emulatorGetKeyValue,
+        .ml_flags = METH_VARARGS | METH_KEYWORDS,
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
     },
     {
         .ml_name = "setKeyValue",
-        .ml_meth = py8_emulatorSetKeyValue,
-        .ml_flags = METH_VARARGS,
+        .ml_meth = (PyCFunction) py8_emulatorSetKeyValue,
+        .ml_flags = METH_VARARGS | METH_KEYWORDS,
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_SET_KEY_VALUE,
     },
     {
         .ml_name = "_execOpc",
-        .ml_meth = _py8_emulatorExecOpc,
-        .ml_flags = METH_VARARGS,
+        .ml_meth = (PyCFunction) _py8_emulatorExecOpc,
+        .ml_flags = METH_VARARGS | METH_KEYWORDS,
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_EXEC_OPT,
     },
     {NULL},
 };
+#pragma GCC diagnostic pop
 
 static struct PyMethodDef module_meths[] = {
     // {

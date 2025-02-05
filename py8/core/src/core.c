@@ -498,10 +498,37 @@ _py8_emulatorExecOpc(PyObject* self, PyObject* args){
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EXEC_OPT,
              "_execOpc(opcode: int)\n"
              "Execute a step in the emulation process given by the opcode.\n\n"
+             "This function should only be used to test CPU functionallities.\n\n"
              "Attributes\n"
              "----------\n"
              "opc: int\n"
              "\tThe opcode to be executed.\n"
+             "Returns\n"
+             "-------\n"
+             "int\n"
+             "\tThe execution output code representing whether the execution was successeful."
+);
+
+static PyObject*
+py8_emulatorLoadRom(PyObject* self, PyObject* args){
+    const char* rom_filepath = NULL;
+    if (!PyArg_ParseTuple(args, "s", &rom_filepath)){
+        return NULL;
+    }
+    if (!rom_filepath){
+        return NULL;
+    }
+    enum Py8ExecutionOutput out = py8_cpuLoadRom(&CAST_PTR(Py8Emulator, self)->ob_cpu, rom_filepath);
+    return PyBool_FromLong((long) out);
+}
+
+PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
+             "loadRom(rom_filepath: str)\n"
+             "Load a Chip8's ROM into memory\n"
+             "Attributes\n"
+             "----------\n"
+             "rom_filepath: str\n"
+             "\tThe filepath to the ROM file.\n"
              "Returns\n"
              "-------\n"
              "int\n"
@@ -568,6 +595,12 @@ static struct PyMethodDef py8_emulator_methods[] = {
         .ml_meth = py8_emulatorGetRegister,
         .ml_flags = METH_VARARGS,
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_REGISTER,
+    },
+    {
+        .ml_name = "loadRom",
+        .ml_meth = py8_emulatorLoadRom,
+        .ml_flags = METH_VARARGS,
+        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
     },
     {
         .ml_name = "setMode",

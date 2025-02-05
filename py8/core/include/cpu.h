@@ -129,6 +129,7 @@ py8_opcodeGetAddr(Py8Opcode opcode);
 *                     0x X Y K K
 *                           |___|
 *                             |____ the byte.
+*
 * @param[in] `opcode`.
 * @return A 8-bit unsigned integer represention of the rightmost byte from the
 * `opcode`.
@@ -196,7 +197,7 @@ py8_cpuSetKey(Py8CPU* cpu, size_t key, bool value);
 
 inline bool
 py8_cpuGetKeyVal(Py8CPU cpu, size_t key){
-    return (cpu.keys & (1 << key)) == 1;
+    return (cpu.keys & (1 << key)) == 0? false: true;
 }
 
 /*
@@ -211,7 +212,7 @@ typedef enum Py8ExecutionOutput (*Py8InstructionExec)(Py8CPU* cpu, Py8Opcode opc
 * @param `exec` The function pointer that executes the instruction on the cpu.
 */
 typedef struct{
-    char code[20];
+    char code[30];
     Py8InstructionExec exec;
 } Py8Instruction;
 

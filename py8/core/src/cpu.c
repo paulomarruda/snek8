@@ -252,6 +252,9 @@ py8_cpuExecutionError(Py8CPU* cpu, Py8Opcode opcode, char* code){
 
 enum Py8ExecutionOutput
 py8_cpuCLS(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     UNUSED(opcode);
     UNUSED(code);
     memset(&cpu->graphics, 0, PY8_SIZE_GRAPHICS * SIZE_U8);
@@ -260,6 +263,9 @@ py8_cpuCLS(Py8CPU* cpu, Py8Opcode opcode, char* code){
 
 enum Py8ExecutionOutput
 py8_cpuRET(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     UNUSED(opcode);
     UNUSED(code);
     if (cpu->sp == 0){
@@ -272,6 +278,10 @@ py8_cpuRET(Py8CPU* cpu, Py8Opcode opcode, char* code){
 
 enum Py8ExecutionOutput
 py8_cpuCALL(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    UNUSED(code);
+    if (!cpu){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     if (cpu->sp == 16){
         return PY8_EXECOUT_STACK_OVERFLOW;
     }
@@ -286,6 +296,9 @@ py8_cpuCALL(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuJMP_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     cpu->pc = py8_opcodeGetAddr(opcode);
     _py8_writeU16(code + 4, cpu->pc);
     return PY8_EXECOUT_SUCCESS;
@@ -296,6 +309,9 @@ py8_cpuJMP_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     uint8_t kk = py8_opcodeGetByte(opcode);
     size_t x = opcode.iq2;
     if (cpu->registers[x] == kk){
@@ -311,6 +327,9 @@ py8_cpuSE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSNE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     uint8_t kk = py8_opcodeGetByte(opcode);
     size_t x = opcode.iq2;
     if (cpu->registers[x] != kk){
@@ -326,6 +345,9 @@ py8_cpuSNE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     uint8_t kk = py8_opcodeGetByte(opcode);
     cpu->registers[x] = kk;
@@ -339,6 +361,9 @@ py8_cpuLD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuADD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     uint8_t kk = py8_opcodeGetByte(opcode);
     size_t x = opcode.iq2;
     cpu->registers[x] += kk;
@@ -352,6 +377,9 @@ py8_cpuADD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     if (cpu->registers[x] == cpu->registers[y]){
@@ -367,6 +395,9 @@ py8_cpuSE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSNE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     if (cpu->registers[x] != cpu->registers[y]){
@@ -382,6 +413,9 @@ py8_cpuSNE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[x] = cpu->registers[y];
@@ -395,6 +429,9 @@ py8_cpuLD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[x] |= cpu->registers[y];
@@ -408,6 +445,9 @@ py8_cpuOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuAND_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[x] &= cpu->registers[y];
@@ -421,6 +461,9 @@ py8_cpuAND_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuXOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[x] ^= cpu->registers[y];
@@ -434,6 +477,9 @@ py8_cpuXOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuADD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[0xF] = UINT8_MAX - cpu->registers[x] < cpu->registers[y]? 1:0;
@@ -448,6 +494,9 @@ py8_cpuADD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSUB_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[0xF] = cpu->registers[x] < cpu->registers[y]? 1:0;
@@ -462,6 +511,9 @@ py8_cpuSUB_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSUBN_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[0xF] = cpu->registers[x] > cpu->registers[y]? 1:0;
@@ -476,6 +528,9 @@ py8_cpuSUBN_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSHR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     switch (cpu->mode) {
@@ -496,6 +551,9 @@ py8_cpuSHR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSHL_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     switch (cpu->mode) {
@@ -516,6 +574,9 @@ py8_cpuSHL_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_I_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     uint16_t addr = py8_opcodeGetAddr(opcode);
     size_t x = opcode.iq1;
     switch (cpu->mode) {
@@ -535,6 +596,9 @@ py8_cpuLD_I_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuJP_V0_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     uint16_t addr = py8_opcodeGetAddr(opcode);
     size_t x = opcode.iq1;
     switch (cpu->mode) {
@@ -554,6 +618,9 @@ py8_cpuJP_V0_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuRND_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     srand(time(NULL));
     size_t x = opcode.iq2;
     uint8_t kk = py8_opcodeGetByte(opcode);
@@ -568,6 +635,9 @@ py8_cpuRND_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuDRW_VX_VY_N(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     size_t n = opcode.lsq;
@@ -601,6 +671,9 @@ py8_cpuDRW_VX_VY_N(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSKP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t key = cpu->registers[x];
     if (py8_cpuGetKeyVal(*cpu, key)){
@@ -615,6 +688,9 @@ py8_cpuSKP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuSKNP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     size_t key = cpu->registers[x];
     if (!py8_cpuGetKeyVal(*cpu, key)){
@@ -629,6 +705,9 @@ py8_cpuSKNP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_DT(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     cpu->registers[x] = cpu->dt;
     code[6] = _py8_its((uint8_t) x);
@@ -640,6 +719,9 @@ py8_cpuLD_VX_DT(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_K(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     bool has_ld = false;
     size_t x = opcode.iq2;
     for (size_t i = 0; i < PY8_SIZE_KEYSET; i++){
@@ -660,6 +742,9 @@ py8_cpuLD_VX_K(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_DT_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     cpu->dt = cpu->registers[x];
     code[10] = _py8_its((uint8_t) x);
@@ -671,6 +756,9 @@ py8_cpuLD_DT_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_ST_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     cpu->st = cpu->registers[x];
     code[10] = _py8_its((uint8_t) x);
@@ -682,6 +770,9 @@ py8_cpuLD_ST_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuADD_I_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     cpu->ir += cpu->registers[x];
     code[10] = _py8_its((uint8_t) x);
@@ -693,6 +784,9 @@ py8_cpuADD_I_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_F_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     cpu->ir = PY8_MEM_ADDR_FONTSET_START + PY8_SIZE_FONTSET_SPRITE * cpu->registers[x];
     code[9] = _py8_its((uint8_t) x);
@@ -704,6 +798,9 @@ py8_cpuLD_F_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_B_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     uint8_t value = cpu->registers[x];
     cpu->memory[cpu->ir + 2] = value % 10;
@@ -720,6 +817,9 @@ py8_cpuLD_B_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_I_V0_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     switch (cpu->mode) {
         case PY8_IMPLM_MODE_COSMAC_VIP:
@@ -743,6 +843,9 @@ py8_cpuLD_I_V0_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_V0_I(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    if (!cpu || !code){
+        return PY8_EXECOUT_EMPTY_STRUCT;
+    }
     size_t x = opcode.iq2;
     switch (cpu->mode) {
         case PY8_IMPLM_MODE_COSMAC_VIP:

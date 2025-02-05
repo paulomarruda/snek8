@@ -21,7 +21,7 @@ typedef struct{
 } Py8Emulator;
 
 PyDoc_STRVAR(PY8_STR_DOC_PY8_EMULATOR,
-             "_Py8Emulator(implm: int)\n"
+             "_Py8Emulator(implm: int, fps: int)\n"
              "Chip8's CPU Emulator.\n\n"
              "Attributes\n"
              "----------\n"
@@ -36,14 +36,19 @@ PyDoc_STRVAR(PY8_STR_DOC_PY8_EMULATOR,
              "\tWhich implementation to use. The possible values are:\n"
              "\t\t-0: The original COSMAC-VIP implementation.\n"
              "\t\t-1: Modern implementations.\n"
+             "fps: int\n"
+             "\tFrames per second"
 );
 
 PyDoc_STRVAR(PY8_STR_DOC_EMULATOR_PY8_EMULATOR_IS_EMULATING,
-    "Controls whether the emulation is running."
+    "Controls whether the emulation is running.\n"
+    "This is a read-only attribute that can only be modified by the emulation process."
 );
 
 PyDoc_STRVAR(PY8_STR_DOC_EMULATOR_PY8_EMULATOR_FPS,
-    "Frames per second."
+    "Frames per second.\n"
+    "This is a read-only attribute that can only be modified by the `setFPS`,\n."
+    "`increaseFPS` or `decreaseFPS` methods.\n"
 );
 
 /**
@@ -242,7 +247,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_SP,
 
 static PyObject*
 py8_emulatorGetRegister(PyObject* self, PyObject* args, PyObject* kwargs){
-    int index = 0;
+    int index;
     char* kwlist[] = {
         "index",
         NULL,
@@ -267,7 +272,11 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTER,
              "Returns\n"
              "-------\n"
              "int\n"
-             "\tThe current value of the register."
+             "\tThe current value of the register.\n"
+             "Raises\n"
+             "------\n"
+             "IndexError\n"
+             "\tIf the register index is not valid, i.e. index < 0 or index => 16."
 );
 
 static PyObject*
@@ -291,8 +300,8 @@ py8_emulatorGetRegisters(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTERS,
-             "getRegisters() -> List[int]"
-             "Retrieve the values of the registers.\n"
+             "getRegisters() -> List[int]\n"
+             "Retrieve all values of the registers.\n"
              "Returns\n"
              "-------\n"
              "List[int]\n"
@@ -347,7 +356,7 @@ py8_emulatorGetStack(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_STACK,
-             "getStack() -> List[int]"
+             "getStack() -> List[int]\n"
              "Retrieve the stack list representation.\n"
              "Returns\n"
              "-------\n"
@@ -374,7 +383,7 @@ py8_emulatorGetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
-             "getKeyValue(key: int) -> bool"
+             "getKeyValue(key: int) -> bool\n"
              "Retrieve the graphics list representation.\n"
              "Attributes\n"
              "----------\n"

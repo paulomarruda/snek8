@@ -1,5 +1,5 @@
 /**
-* @file cpu.h
+* @file cpu.c
 * @author Paulo Arruda
 * @license MIT
 * @brief Implementation of the Chip8's CPU and related emulation routines.
@@ -26,6 +26,9 @@ inline static char
 _py8_its(uint8_t nibble){
     char result = ' ';
     switch (nibble) {
+        case 0x0:
+            result = '0';
+            break;
         case 0x1:
             result = '1';
             break;
@@ -170,17 +173,14 @@ py8_cpuLoadRom(Py8CPU* cpu, const char* rom_file_path){
     if (!cpu){
         return PY8_EXECOUT_EMPTY_STRUCT;
     }else if (!rom_file_path){
-        return PY8_EXECOUT_ROM_FILE_NOT_FOUND;
+        return PY8_EXECOUT_ROM_FILE_INVALID;
     }
     FILE* rom_file = fopen(rom_file_path, "rb");
     if (!rom_file_path){
         return PY8_EXECOUT_ROM_FILE_FAILED_TO_OPEN;
     }
-    size_t size = 0;
-    if (fseek(rom_file, 0, SEEK_END) < 0 || (size = ftell(rom_file) < 0)){
-        fclose(rom_file);
-        return PY8_EXECOUT_ROM_FILE_FAILED_TO_READ;
-    }
+    (void) fseek(rom_file, 0, SEEK_END);
+    size_t size = ftell(rom_file);
     rewind(rom_file);
     size_t nread = fread(cpu->memory + PY8_MEM_ADDR_PROG_START, 1, size, rom_file);
     if (nread != size){
@@ -223,8 +223,9 @@ _py8_cpuIncrementPC(Py8CPU* cpu){
 */
 static Py8Opcode
 _py8_cpuGetOpcode(Py8CPU cpu){
-    uint16_t code = ((uint16_t) cpu.memory[cpu.pc]) << 8;
-    code |= cpu.memory[cpu.pc + 2];
+    uint16_t code = cpu.memory[cpu.pc];
+    code <<= 8;
+    code |= cpu.memory[cpu.pc + 1];
     return py8_opcodeInit(code);
 }
 
@@ -241,7 +242,9 @@ py8_cpuSetKey(Py8CPU* cpu, size_t key, bool value){
     return PY8_EXECOUT_SUCCESS;
 }
 
-
+/*
+* NOP
+*/
 enum Py8ExecutionOutput
 py8_cpuExecutionError(Py8CPU* cpu, Py8Opcode opcode, char* code){
     UNUSED(cpu);
@@ -250,6 +253,9 @@ py8_cpuExecutionError(Py8CPU* cpu, Py8Opcode opcode, char* code){
     return PY8_EXECOUT_INVALID_OPCODE;
 }
 
+/*
+* CLS
+*/
 enum Py8ExecutionOutput
 py8_cpuCLS(Py8CPU* cpu, Py8Opcode opcode, char* code){
     if (!cpu){
@@ -261,13 +267,16 @@ py8_cpuCLS(Py8CPU* cpu, Py8Opcode opcode, char* code){
     return PY8_EXECOUT_SUCCESS;
 }
 
+/*
+* RET
+*/
 enum Py8ExecutionOutput
 py8_cpuRET(Py8CPU* cpu, Py8Opcode opcode, char* code){
+    UNUSED(opcode);
+    UNUSED(code);
     if (!cpu){
         return PY8_EXECOUT_EMPTY_STRUCT;
     }
-    UNUSED(opcode);
-    UNUSED(code);
     if (cpu->sp == 0){
         return PY8_EXECOUT_STACK_EMPTY;
     }
@@ -276,6 +285,9 @@ py8_cpuRET(Py8CPU* cpu, Py8Opcode opcode, char* code){
     return PY8_EXECOUT_SUCCESS;
 }
 
+/*
+* CALL
+*/
 enum Py8ExecutionOutput
 py8_cpuCALL(Py8CPU* cpu, Py8Opcode opcode, char* code){
     UNUSED(code);
@@ -305,7 +317,7 @@ py8_cpuJMP_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
 }
 
 /*
-* SE V0xX, 0xKK.
+* SE V{0xX}, 0xKK.
 */
 enum Py8ExecutionOutput
 py8_cpuSE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -317,13 +329,13 @@ py8_cpuSE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
     if (cpu->registers[x] == kk){
         _py8_cpuIncrementPC(cpu);
     }
-    code[6] = _py8_its((uint8_t) x);
-    _py8_writeU8(code + 9, kk);
+    code[7] = _py8_its((uint8_t) x);
+    _py8_writeU8(code + 11, kk);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* SNE V0xX, 0xKK.
+* SNE V{0xX}, 0xKK.
 */
 enum Py8ExecutionOutput
 py8_cpuSNE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -335,13 +347,13 @@ py8_cpuSNE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
     if (cpu->registers[x] != kk){
         _py8_cpuIncrementPC(cpu);
     }
-    code[7] = _py8_its((uint8_t) x);
-    _py8_writeU8(code + 10, kk);
+    code[8] = _py8_its((uint8_t) x);
+    _py8_writeU8(code + 12, kk);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD V0xX, 0xKK.
+* LD V{0xX}, 0xKK.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -351,13 +363,13 @@ py8_cpuLD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t x = opcode.iq2;
     uint8_t kk = py8_opcodeGetByte(opcode);
     cpu->registers[x] = kk;
-    code[6] = _py8_its((uint8_t) x);
-    _py8_writeU8(code + 9, kk);
+    code[7] = _py8_its((uint8_t) x);
+    _py8_writeU8(code + 11, kk);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* ADD V0xX, 0xKK.
+* ADD V{0xX}, 0xKK.
 */
 enum Py8ExecutionOutput
 py8_cpuADD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -367,13 +379,13 @@ py8_cpuADD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
     uint8_t kk = py8_opcodeGetByte(opcode);
     size_t x = opcode.iq2;
     cpu->registers[x] += kk;
-    code[7] = _py8_its((uint8_t) x);
-    _py8_writeU8(code + 10, kk);
+    code[8] = _py8_its((uint8_t) x);
+    _py8_writeU8(code + 12, kk);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* SE V0xX, V0xY.
+* SE V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuSE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -385,13 +397,13 @@ py8_cpuSE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     if (cpu->registers[x] == cpu->registers[y]){
         _py8_cpuIncrementPC(cpu);
     }
-    code[6] = _py8_its((uint8_t) x);
-    code[12] = _py8_its((uint8_t) y);
+    code[7] = _py8_its((uint8_t) x);
+    code[15] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* SNE V0xX, V0xY.
+* SNE V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuSNE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -403,13 +415,13 @@ py8_cpuSNE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     if (cpu->registers[x] != cpu->registers[y]){
         _py8_cpuIncrementPC(cpu);
     }
-    code[7] = _py8_its((uint8_t) x);
-    code[13] = _py8_its((uint8_t) y);
+    code[8] = _py8_its((uint8_t) x);
+    code[16] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD V0xX, V0xY.
+* LD V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -419,13 +431,13 @@ py8_cpuLD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[x] = cpu->registers[y];
-    code[6] = _py8_its((uint8_t) x);
-    code[12] = _py8_its((uint8_t) y);
+    code[7] = _py8_its((uint8_t) x);
+    code[15] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* OR V0xX, V0xY.
+* OR V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -435,13 +447,13 @@ py8_cpuOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[x] |= cpu->registers[y];
-    code[6] = _py8_its((uint8_t) x);
-    code[12] = _py8_its((uint8_t) y);
+    code[7] = _py8_its((uint8_t) x);
+    code[15] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* AND V0xX, V0xY.
+* AND V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuAND_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -451,13 +463,13 @@ py8_cpuAND_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[x] &= cpu->registers[y];
-    code[7] = _py8_its((uint8_t) x);
-    code[13] = _py8_its((uint8_t) y);
+    code[8] = _py8_its((uint8_t) x);
+    code[16] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* XOR V0xX, V0xY.
+* XOR V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuXOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -467,13 +479,13 @@ py8_cpuXOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t x = opcode.iq2;
     size_t y = opcode.iq1;
     cpu->registers[x] ^= cpu->registers[y];
-    code[7] = _py8_its((uint8_t) x);
-    code[13] = _py8_its((uint8_t) y);
+    code[8] = _py8_its((uint8_t) x);
+    code[16] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* ADD V0xX, V0xY.
+* ADD V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuADD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -484,13 +496,13 @@ py8_cpuADD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t y = opcode.iq1;
     cpu->registers[0xF] = UINT8_MAX - cpu->registers[x] < cpu->registers[y]? 1:0;
     cpu->registers[x] += cpu->registers[y];
-    code[7] = _py8_its((uint8_t) x);
-    code[13] = _py8_its((uint8_t) y);
+    code[8] = _py8_its((uint8_t) x);
+    code[16] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* SUB V0xX, V0xY.
+* SUB V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuSUB_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -501,13 +513,13 @@ py8_cpuSUB_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t y = opcode.iq1;
     cpu->registers[0xF] = cpu->registers[x] < cpu->registers[y]? 1:0;
     cpu->registers[x] -= cpu->registers[y];
-    code[7] = _py8_its((uint8_t) x);
-    code[13] = _py8_its((uint8_t) y);
+    code[8] = _py8_its((uint8_t) x);
+    code[16] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* SUBN V0xX, V0xY.
+* SUBN V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuSUBN_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -518,13 +530,13 @@ py8_cpuSUBN_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t y = opcode.iq1;
     cpu->registers[0xF] = cpu->registers[x] > cpu->registers[y]? 1:0;
     cpu->registers[x] = cpu->registers[y] - cpu->registers[x];
-    code[8] = _py8_its((uint8_t) x);
-    code[14] = _py8_its((uint8_t) y);
+    code[9] = _py8_its((uint8_t) x);
+    code[17] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* SHR V0xX.
+* SHR V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuSHR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -542,12 +554,13 @@ py8_cpuSHR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     }
     cpu->registers[0xF] = (cpu->registers[x] & 0x1) != 0? 1:0;
     cpu->registers[x] >>= 1;
-    code[7] = _py8_its((uint8_t) x);
+    code[8] = _py8_its((uint8_t) x);
+    code[16] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* SHL V0xX.
+* SHL V{0xX}, V{0xY}.
 */
 enum Py8ExecutionOutput
 py8_cpuSHL_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -565,34 +578,26 @@ py8_cpuSHL_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code){
     }
     cpu->registers[0xF] = (cpu->registers[x] & 0x80) != 0? 1:0;
     cpu->registers[x] <<= 1;
-    code[7] = _py8_its((uint8_t) x);
+    code[8] = _py8_its((uint8_t) x);
+    code[16] = _py8_its((uint8_t) y);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* JP V0, 0x0NNN.
+* LD I, 0x0NNN.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_I_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
     if (!cpu || !code){
         return PY8_EXECOUT_EMPTY_STRUCT;
     }
-    uint16_t addr = py8_opcodeGetAddr(opcode);
-    size_t x = opcode.iq1;
-    switch (cpu->mode) {
-        case PY8_IMPLM_MODE_COSMAC_VIP:
-            cpu->pc = addr + cpu->registers[0];
-            break;
-        case PY8_IMPLM_MODE_MODERN:
-            cpu->pc = addr + cpu->registers[x];
-            break;
-    }
-    _py8_writeU16(code + 7, addr);
+    cpu->ir = py8_opcodeGetAddr(opcode);
+    _py8_writeU16(code + 6, cpu->ir);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* JP V0, 0x0NNN.
+* JP V{0x0}, 0x0NNN.
 */
 enum Py8ExecutionOutput
 py8_cpuJP_V0_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -607,14 +612,15 @@ py8_cpuJP_V0_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code){
             break;
         case PY8_IMPLM_MODE_MODERN:
             cpu->pc = addr + cpu->registers[x];
+            code[7] = _py8_its((uint8_t) x);
             break;
     }
-    _py8_writeU16(code + 7, addr);
+    _py8_writeU16(code + 11, addr);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* RND V0xX, 0xKK.
+* RND V{0xX}, 0xKK.
 */
 enum Py8ExecutionOutput
 py8_cpuRND_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -625,13 +631,19 @@ py8_cpuRND_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t x = opcode.iq2;
     uint8_t kk = py8_opcodeGetByte(opcode);
     cpu->registers[x] = rand() & kk;
-    code[7] = _py8_its((uint8_t) x);
-    _py8_writeU8(code + 10, kk);
+    code[8] = _py8_its((uint8_t) x);
+    _py8_writeU8(code + 12, kk);
     return PY8_EXECOUT_SUCCESS;
 }
 
+static uint8_t*
+_py8_cpuGetPixel(Py8CPU* cpu, size_t x, size_t y){
+    size_t idx_x = x & 63;
+    size_t idx_y = y & 31;
+    return &cpu->graphics[idx_y * PY8_GRAPHICS_WIDTH + idx_x];
+}
 /*
-* DRW V0xX, V0xY, 0xN.
+* DRW V{0xX}, V{0xY}, 0xN.
 */
 enum Py8ExecutionOutput
 py8_cpuDRW_VX_VY_N(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -644,30 +656,30 @@ py8_cpuDRW_VX_VY_N(Py8CPU* cpu, Py8Opcode opcode, char* code){
     size_t pos_x = cpu->registers[x];
     size_t pos_y = cpu->registers[y];
     size_t byte_index = 0;
+    cpu->registers[0xF] = 0;
     while (byte_index < n){
-        size_t bit_index = 0;
         uint8_t byte = cpu->memory[cpu->ir + byte_index];
+        size_t bit_index = 0;
         while (bit_index < 8){
-            uint8_t bit = (byte >> byte_index) & 0x1;
-            size_t index = ((pos_y + byte_index) & 31) * PY8_GRAPHICS_WIDTH +
-                           ((pos_x + bit_index) & 63);
-            uint8_t* pixel_ptr = &cpu->registers[index];
+            uint8_t bit = (byte & (0x80 >> bit_index))? 1: 0;
+            uint8_t* pixel_ptr = _py8_cpuGetPixel(cpu, pos_x + bit_index,
+                                                  pos_y + byte_index);
             *pixel_ptr ^= bit;
-            if (bit && *pixel_ptr){
+            if (bit == 1 && *pixel_ptr == 1){
                 cpu->registers[0xF] = 1;
             }
             bit_index++;
         }
         byte_index++;
     }
-    code[7] = _py8_its((uint8_t) x);
-    code[13] = _py8_its((uint8_t) y);
-    code[18] = _py8_its((uint8_t) n);
+    code[8] = _py8_its((uint8_t) x);
+    code[16] = _py8_its((uint8_t) y);
+    code[22] = _py8_its((uint8_t) n);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* SKP V0xX.
+* SKP V{0xX}.
 */
 enum Py8ExecutionOutput
 py8_cpuSKP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -679,12 +691,12 @@ py8_cpuSKP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
     if (py8_cpuGetKeyVal(*cpu, key)){
         _py8_cpuIncrementPC(cpu);
     }
-    code[7] = _py8_its((uint8_t) x);
+    code[8] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* SKNP V0xX.
+* SKNP V{0xX}.
 */
 enum Py8ExecutionOutput
 py8_cpuSKNP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -696,12 +708,12 @@ py8_cpuSKNP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
     if (!py8_cpuGetKeyVal(*cpu, key)){
         _py8_cpuIncrementPC(cpu);
     }
-    code[7] = _py8_its((uint8_t) x);
+    code[9] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD V0xX, DT.
+* LD V{0xX}, DT.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_DT(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -710,12 +722,12 @@ py8_cpuLD_VX_DT(Py8CPU* cpu, Py8Opcode opcode, char* code){
     }
     size_t x = opcode.iq2;
     cpu->registers[x] = cpu->dt;
-    code[6] = _py8_its((uint8_t) x);
+    code[7] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD V0xX, K.
+* LDK V{0xX}.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_K(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -733,12 +745,12 @@ py8_cpuLD_VX_K(Py8CPU* cpu, Py8Opcode opcode, char* code){
     if (!has_ld){
         _py8_cpuIncrementPC(cpu);
     }
-    code[6] = _py8_its((uint8_t) x);
+    code[8] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD DT, V0xX.
+* LD DT, V{0xX}.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_DT_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -747,12 +759,12 @@ py8_cpuLD_DT_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
     }
     size_t x = opcode.iq2;
     cpu->dt = cpu->registers[x];
-    code[10] = _py8_its((uint8_t) x);
+    code[11] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD ST, V0xX.
+* LD ST, V{0xX}.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_ST_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -761,12 +773,12 @@ py8_cpuLD_ST_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
     }
     size_t x = opcode.iq2;
     cpu->st = cpu->registers[x];
-    code[10] = _py8_its((uint8_t) x);
+    code[11] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* ADD I, V0xX.
+* ADD I, V{0xX}.
 */
 enum Py8ExecutionOutput
 py8_cpuADD_I_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -775,12 +787,12 @@ py8_cpuADD_I_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
     }
     size_t x = opcode.iq2;
     cpu->ir += cpu->registers[x];
-    code[10] = _py8_its((uint8_t) x);
+    code[11] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD F, V0xX.
+* LD F, V{0xX}.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_F_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -789,12 +801,12 @@ py8_cpuLD_F_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
     }
     size_t x = opcode.iq2;
     cpu->ir = PY8_MEM_ADDR_FONTSET_START + PY8_SIZE_FONTSET_SPRITE * cpu->registers[x];
-    code[9] = _py8_its((uint8_t) x);
+    code[10] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD B, V0xX.
+* LD B, V{0xX}.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_B_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -808,12 +820,12 @@ py8_cpuLD_B_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
     cpu->memory[cpu->ir + 1] = value % 10;
     value /= 10;
     cpu->memory[cpu->ir] = value % 10;
-    code[9] = _py8_its((uint8_t) x);
+    code[10] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD [I], V0xX.
+* LD [I], V{0xX}.
 */
 enum Py8ExecutionOutput
 py8_cpuLD_I_V0_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -834,12 +846,12 @@ py8_cpuLD_I_V0_VX(Py8CPU* cpu, Py8Opcode opcode, char* code){
             }
             break;
     }
-    code[11] = _py8_its((uint8_t) x);
+    code[12] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD V0xX, [I].
+* LD V{0xX}, [I].
 */
 enum Py8ExecutionOutput
 py8_cpuLD_VX_V0_I(Py8CPU* cpu, Py8Opcode opcode, char* code){
@@ -860,7 +872,7 @@ py8_cpuLD_VX_V0_I(Py8CPU* cpu, Py8Opcode opcode, char* code){
             }
             break;
     }
-    code[6] = _py8_its((uint8_t) x);
+    code[7] = _py8_its((uint8_t) x);
     return PY8_EXECOUT_SUCCESS;
 }
 
@@ -902,31 +914,31 @@ py8_getInstruction(Py8Opcode opcode){
             break;
         case 0x3:
             instruction = (Py8Instruction) {
-                .code = "SE V0xX, 0xKK",
+                .code = "SE V{0xX}, 0xKK",
                 .exec = py8_cpuSE_VX_BYTE,
             };
             break;
         case 0x4:
             instruction = (Py8Instruction) {
-                .code = "SNE V0xX, 0xKK",
+                .code = "SNE V{0xX}, 0xKK",
                 .exec = py8_cpuSNE_VX_BYTE,
             };
             break;
         case 0x5:
             instruction = (Py8Instruction) {
-                .code = "SE V0xX, V0xY",
+                .code = "SE V{0xX}, V{0xY}",
                 .exec = py8_cpuSE_VX_VY,
             };
             break;
         case 0x6:
             instruction = (Py8Instruction) {
-                .code = "LD V0xX, 0xKK",
-                .exec = py8_cpuSE_VX_VY,
+                .code = "LD V{0xX}, 0xKK",
+                .exec = py8_cpuLD_VX_BYTE,
             };
             break;
         case 0x7:
             instruction = (Py8Instruction) {
-                .code = "ADD V0xX, 0xKK",
+                .code = "ADD V{0xX}, 0xKK",
                 .exec = py8_cpuADD_VX_BYTE,
             };
             break;
@@ -934,55 +946,55 @@ py8_getInstruction(Py8Opcode opcode){
             switch (opcode.lsq) {
                 case 0x0:
                     instruction = (Py8Instruction) {
-                        .code = "LD V0xX, V0xY",
+                        .code = "LD V{0xX}, V{0xY}",
                         .exec = py8_cpuLD_VX_VY,
                     };
                     break;
                 case 0x1:
                     instruction = (Py8Instruction) {
-                        .code = "OR V0xX, V0xY",
+                        .code = "OR V{0xX}, V{0xY}",
                         .exec = py8_cpuOR_VX_VY,
                     };
                     break;
                 case 0x2:
                     instruction = (Py8Instruction) {
-                        .code = "AND V0xX, V0xY",
+                        .code = "AND V{0xX}, V{0xY}",
                         .exec = py8_cpuAND_VX_VY,
                     };
                     break;
                 case 0x3:
                     instruction = (Py8Instruction) {
-                        .code = "XOR V0xX, V0xY",
+                        .code = "XOR V{0xX}, V{0xY}",
                         .exec = py8_cpuXOR_VX_VY,
                     };
                     break;
                 case 0x4:
                     instruction = (Py8Instruction) {
-                        .code = "ADD V0xX, V0xY",
+                        .code = "ADD V{0xX}, V{0xY}",
                         .exec = py8_cpuADD_VX_VY,
                     };
                     break;
                 case 0x5:
                     instruction = (Py8Instruction) {
-                        .code = "SUB V0xX, V0xY",
+                        .code = "SUB V{0xX}, V{0xY}",
                         .exec = py8_cpuSUB_VX_VY,
                     };
                     break;
                 case 0x6:
                     instruction = (Py8Instruction) {
-                        .code = "SHR V0xX",
+                        .code = "SHR V{0xX}, V{0xY}",
                         .exec = py8_cpuSHR_VX_VY,
                     };
                     break;
                 case 0x7:
                     instruction = (Py8Instruction) {
-                        .code = "SUBN V0xX, V0xY",
+                        .code = "SUBN V{0xX}, V{0xY}",
                         .exec = py8_cpuSUBN_VX_VY,
                     };
                     break;
                 case 0xE:
                     instruction = (Py8Instruction) {
-                        .code = "SHL V0xX",
+                        .code = "SHL V{0xX}, V{0xY}",
                         .exec = py8_cpuSHL_VX_VY,
                     };
                     break;
@@ -996,7 +1008,7 @@ py8_getInstruction(Py8Opcode opcode){
             break;
         case 0x9:
                 instruction = (Py8Instruction) {
-                    .code = "SNE V0xX, V0xY",
+                    .code = "SNE V{0xX}, V{0xY}",
                     .exec = py8_cpuSNE_VX_VY,
                 };
             break;
@@ -1008,19 +1020,19 @@ py8_getInstruction(Py8Opcode opcode){
             break;
         case 0xB:
                 instruction = (Py8Instruction) {
-                    .code = "JP V0, 0x0NNN",
+                    .code = "JP V{0x0}, 0x0NNN",
                     .exec = py8_cpuJP_V0_ADDR,
                 };
             break;
         case 0xC:
                 instruction = (Py8Instruction) {
-                    .code = "RND V0xX, 0xKK",
+                    .code = "RND V{0xX}, 0xKK",
                     .exec = py8_cpuRND_VX_BYTE,
                 };
             break;
         case 0xD:
                 instruction = (Py8Instruction) {
-                    .code = "DRW V0xX, V0xY, 0xN",
+                    .code = "DRW V{0xX}, V{0xY}, 0xN",
                     .exec = py8_cpuDRW_VX_VY_N,
                 };
             break;
@@ -1028,13 +1040,13 @@ py8_getInstruction(Py8Opcode opcode){
             switch (opcode.lsq) {
                 case 0xE:
                     instruction = (Py8Instruction) {
-                        .code = "SKP V0xX",
+                        .code = "SKP V{0xX}",
                         .exec = py8_cpuSKP_VX,
                     };
                     break;
                 case 0x1:
                     instruction = (Py8Instruction) {
-                        .code = "SKNP V0xX",
+                        .code = "SKNP V{0xX}",
                         .exec = py8_cpuSKNP_VX,
                     };
                     break;
@@ -1050,13 +1062,13 @@ py8_getInstruction(Py8Opcode opcode){
             switch (opcode.lsq) {
                 case 0x7:
                     instruction = (Py8Instruction) {
-                        .code = "LD V0xX, DT",
+                        .code = "LD V{0xX}, DT",
                         .exec = py8_cpuLD_VX_DT,
                     };
                     break;
                 case 0xA:
                     instruction = (Py8Instruction) {
-                        .code = "LD V0xX, K",
+                        .code = "LDK V{0xX}",
                         .exec = py8_cpuLD_VX_K,
                     };
                     break;
@@ -1064,19 +1076,19 @@ py8_getInstruction(Py8Opcode opcode){
                     switch (opcode.iq1) {
                         case 0x1:
                             instruction = (Py8Instruction) {
-                                .code = "LD DT, V0xX",
+                                .code = "LD DT, V{0xX}",
                                 .exec = py8_cpuLD_DT_VX,
                             };
                             break;
                         case 0x5:
                             instruction = (Py8Instruction) {
-                                .code = "LD [I], V0xX",
+                                .code = "LD [I], V{0xX}",
                                 .exec = py8_cpuLD_I_V0_VX,
                             };
                             break;
                         case 0x6:
                             instruction = (Py8Instruction) {
-                                .code = "LD V0xX, [I]",
+                                .code = "LD V{0xX}, [I]",
                                 .exec = py8_cpuLD_VX_V0_I,
                             };
                             break;
@@ -1090,25 +1102,25 @@ py8_getInstruction(Py8Opcode opcode){
                     break;
                 case 0x8:
                     instruction = (Py8Instruction) {
-                        .code = "LD ST, V0xX",
+                        .code = "LD ST, V{0xX}",
                         .exec = py8_cpuLD_ST_VX,
                     };
                     break;
                 case 0xE:
                     instruction = (Py8Instruction) {
-                        .code = "ADD I, V0xX",
+                        .code = "ADD I, V{0xX}",
                         .exec = py8_cpuADD_I_VX,
                     };
                     break;
                 case 0x9:
                     instruction = (Py8Instruction) {
-                        .code = "LD F, V0xX",
+                        .code = "LD F, V{0xX}",
                         .exec = py8_cpuLD_F_VX,
                     };
                     break;
                 case 0x3:
                     instruction = (Py8Instruction) {
-                        .code = "LD F, V0xX",
+                        .code = "LD B, V{0xX}",
                         .exec = py8_cpuLD_B_VX,
                     };
                     break;

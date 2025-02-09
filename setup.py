@@ -12,7 +12,7 @@ if os.name != 'nt':
     if sys.platform == 'darwin' and 'APPVEYOR' in os.environ:
         os.environ['CC'] = 'gcc-8'
     py8_module = Extension(
-        name = '_py8core_',
+        name = 'py8core',
         sources = [
             os.path.join(PARENT_DIR, 'core/src/cpu.c'),
             os.path.join(PARENT_DIR, 'core/src/core.c'),
@@ -27,12 +27,14 @@ if os.name != 'nt':
             '-Werror',
             '-Wfloat-equal',
             '-Wpedantic',
-            '-O3',
+            # '-O3',
+            '-g3',
+            '-ggdb'
         ]
     )
 else:
     py8_module = Extension(
-        name = "_py8core_",
+        name = "py8core",
         sources = [
             os.path.join(PARENT_DIR, 'core/src/cpu.c'),
             os.path.join(PARENT_DIR, 'core/src/emulator.c'),

@@ -65,6 +65,7 @@ enum Py8ExecutionOutput{
     PY8_EXECOUT_STACK_EMPTY,
     PY8_EXECOUT_STACK_OVERFLOW,
     PY8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS,
+    PY8_EXECOUT_ROM_FILE_INVALID,
     PY8_EXECOUT_ROM_FILE_NOT_FOUND,
     PY8_EXECOUT_ROM_FILE_FAILED_TO_OPEN,
     PY8_EXECOUT_ROM_FILE_FAILED_TO_READ,
@@ -195,7 +196,7 @@ py8_cpuLoadRom(Py8CPU* cpu, const char* rom_file_path);
 enum Py8ExecutionOutput
 py8_cpuSetKey(Py8CPU* cpu, size_t key, bool value);
 
-inline bool
+static inline bool
 py8_cpuGetKeyVal(Py8CPU cpu, size_t key){
     return (cpu.keys & (1 << key)) == 0? false: true;
 }

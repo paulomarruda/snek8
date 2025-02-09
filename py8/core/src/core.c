@@ -574,7 +574,6 @@ py8_emulatorEmulationStep(PyObject* self, PyObject* args){
     Py8Instruction instruc;
     enum Py8ExecutionOutput out = py8_cpuEmulate(&CAST_PTR(Py8Emulator, self)->ob_cpu,
                                                  &instruc);
-    printf("%s\n", instruc.code);
     if (out != PY8_EXECOUT_SUCCESS){
         CAST_PTR(Py8Emulator, self)->ob_is_running = false;
     }

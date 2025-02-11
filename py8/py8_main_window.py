@@ -1,8 +1,8 @@
 from typing import Callable, List, Dict
-from py8core import IMPL_MODE_COSMAC_VIP, IMPL_MODE_MODERN
 from py8_screen import Py8Screen
 from PyQt6.QtWidgets import QMenu, QMenuBar, QMainWindow, QLabel, QFileDialog
 from PyQt6.QtGui import QIcon, QAction, QKeyEvent
+from PyQt6.QtCore import Qt
 
 
 class Py8MainWindow(QMainWindow):
@@ -40,6 +40,7 @@ class Py8MainWindow(QMainWindow):
         self.setGeometry(0, 0, width, height)
         self.setFixedSize(width, height)
         self.setWindowTitle(title)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         # self.setWindowIcon(icon)
         pass
 
@@ -66,8 +67,8 @@ class Py8MainWindow(QMainWindow):
             self.win_menus[menu_name].addAction(menu_item)
 
     def setKeys(self, cpu_key_map: Dict[int, Callable], app_key_map: Dict[int, Callable]) -> None:
-        self.cpu_key_map = cpu_key_map
-        self.app_key_map = app_key_map
+        self.cpu_key_map = cpu_key_map.copy()
+        self.app_key_map = app_key_map.copy()
 
     def setStatusBarText(self, text: str) -> None:
         self.status_bar.setText(text)
@@ -75,14 +76,11 @@ class Py8MainWindow(QMainWindow):
     def keyPressEvent(self, event: QKeyEvent) -> None:
         key = event.key()
         if key in self.cpu_key_map:
-            action = self.cpu_key_map[key]
-            action(True)
+            self.cpu_key_map[key][0]()
         elif key in self.app_key_map:
-            action = self.app_key_map[key]
-            action()
+            self.app_key_map[key]()
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         key = event.key()
         if key in self.cpu_key_map:
-            action = self.cpu_key_map[key]
-            action(False)
+            self.cpu_key_map[key][1]()

@@ -1,4 +1,4 @@
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 import os
 import sys
 from typing import List
@@ -62,6 +62,8 @@ setup(
     license = 'MIT',
     url = 'https://github.com/paulomarruda/py8/',
     ext_modules = [py8_module],
-    packages = [PARENT_DIR],
+    # packages = [PARENT_DIR],
     python_requires = '>=3.13',
+    packages = find_packages(where = PARENT_DIR),
+
 )

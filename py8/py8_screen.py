@@ -2,7 +2,7 @@ import os
 import sys
 from typing import Tuple, List, Dict, Annotated
 from py8core import Py8Emulator, SIZE_GRAPHICS_WIDTH, SIZE_GRAPHICS_HEIGHT,\
-                    SIZE_GRAPHICS, IMPL_MODE_COSMAC_VIP, IMPL_MODE_MODERN
+                    SIZE_GRAPHICS
 from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtGui import QIcon, QAction, QColor, QKeyEvent, QPainter
 from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog,\
@@ -22,7 +22,7 @@ class Py8Screen(QFrame):
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        # self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.py8_screen = [False for x in range(SIZE_GRAPHICS)]
 
     @property
@@ -36,6 +36,10 @@ class Py8Screen(QFrame):
     @property
     def SIZE_PIXEL(self) -> int:
         return 10
+
+    def clearScreen(self) -> None:
+        self.py8_screen = [False for pix in range(SIZE_GRAPHICS)]
+        self.update()
 
     def updateScreen(self, screen: Annotated[List[int], SIZE_GRAPHICS]) -> None:
         self.py8_screen = screen

@@ -1,8 +1,10 @@
 /**
 * @file core.c
 * @author Paulo Arruda
-* @license MIT
-* @brief Implementation of the Python Py8 Emulator extension module.
+* @license GPL-3
+* @brief Implementation of the Python py8core extension module. This module is
+* centered at the new bilt-in type Py8EMulator, that is responsible to bridge
+* the information between the frontend and the CPU and its routines.
 * @note Built with Python 3.13.
 */
 #ifndef PY8_CORE_C
@@ -21,8 +23,8 @@ typedef struct{
 } Py8Emulator;
 
 PyDoc_STRVAR(PY8_STR_DOC_PY8_EMULATOR,
-             "Py8Emulator(implm: int = IMPLM_MODE_COSMAC_VIP)\n"
-             "Chip8's CPU Emulator.\n\n"
+             "Py8Emulator(implm_flags: int = 0)\n\n"
+             "Chip8's emulator.\n\n"
              "Attributes\n"
              "----------\n"
              "is_running: bool\n"
@@ -32,10 +34,13 @@ PyDoc_STRVAR(PY8_STR_DOC_PY8_EMULATOR,
              "\n\n"
              "Parameters\n"
              "----------\n"
-             "implm: int\n"
-             "\tWhich implementation to use. The possible values are:\n"
-             "\t\t-0: The original COSMAC-VIP implementation.\n"
-             "\t\t-1: Modern implementations.\n"
+             "implm_flags: int\n"
+             "\tFlags that dictates how certain instructions (see below) are executed. "
+             "The flags passed to the init method has to be a bitwise or combination of "
+             "the following:\n"
+             "\t\t-0: IMPLM_MODE_BNNN_USE_VX.\n"
+             "\t\t-1: IMPLM_MODE_SHIFTS_USE_VY.\n"
+             "\t\t-2: IMPLM_MODE_FX_CHANGE_I.\n"
 );
 
 PyDoc_STRVAR(PY8_STR_DOC_EMULATOR_PY8_EMULATOR_IS_RUNNING,
@@ -108,26 +113,20 @@ py8_emulatorNew(PyTypeObject* subtype, PyObject* args, PyObject* kwargs){
 */
 static int
 py8_emulatorInit(PyObject* self, PyObject* args, PyObject* kwargs){
-    int mode = 0;
+    int implm_flags = 0;
     char* kwlist[] = {
-        "implm",
+        "implm_flags",
         NULL,
     };
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist, &mode)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist, &implm_flags)){
         return -1;
     }
     CAST_PTR(Py8Emulator, self)->ob_is_running = false;
-    switch (mode) {
-        case 0:
-            py8_cpuInit(&CAST_PTR(Py8Emulator, self)->ob_cpu, PY8_IMPLM_MODE_COSMAC_VIP);
-            break;
-        case 1:
-            py8_cpuInit(&CAST_PTR(Py8Emulator, self)->ob_cpu, PY8_IMPLM_MODE_MODERN);
-            break;
-        default:
-            PyErr_Format(PyExc_ValueError, "Value %d is invalid for implementation.", mode);
-            return -1;
+    if (implm_flags < 0 || implm_flags >= 255){
+        PyErr_Format(PyExc_ValueError, "Value %d is invalid for implementation.", implm_flags);
+        return -1;
     }
+    py8_cpuInit(&CAST_PTR(Py8Emulator, self)->ob_cpu, (uint8_t) implm_flags);
     return 0;
 }
 
@@ -136,19 +135,22 @@ py8_emulatorInit(PyObject* self, PyObject* args, PyObject* kwargs){
 * ------------------
 */
 
+/**
+* @brief Retrieve the implementation flags.
+*/
 static PyObject*
-py8_emulatorGetMode(PyObject* self, PyObject* args){
+py8_emulatorGetFlags(PyObject* self, PyObject* args){
     UNUSED(args);
-    return PyLong_FromLong((long) CAST_PTR(Py8Emulator, self)->ob_cpu.mode);
+    return PyLong_FromLong((long) CAST_PTR(Py8Emulator, self)->ob_cpu.implm_flags);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_MODE,
-             "getMode() -> int\n"
-             "Retrieve the implementation mode.\n"
+PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_FLAGS,
+             "getFlags() -> int\n\n"
+             "Retrieve the implementation flags.\n"
              "Returns\n"
              "-------\n"
              "int\n"
-             "\tThe current value of the implementation mode."
+             "\tThe current value of the implementation flags."
 );
 
 /**
@@ -161,7 +163,7 @@ py8_emulatorGetPC(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_PC,
-             "getPC() -> int\n"
+             "getPC() -> int\n\n"
              "Retrieve the program counter.\n"
              "Returns\n"
              "-------\n"
@@ -179,7 +181,7 @@ py8_emulatorGetDT(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_DT,
-             "getDT() -> int\n"
+             "getDT() -> int\n\n"
              "Retrieve the delay timer register.\n"
              "Returns\n"
              "-------\n"
@@ -197,7 +199,7 @@ py8_emulatorGetST(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_ST,
-             "getST() -> int\n"
+             "getST() -> int\n\n"
              "Retrieve the sound timer register.\n"
              "Returns\n"
              "-------\n"
@@ -215,7 +217,7 @@ py8_emulatorGetIR(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_IR,
-             "getIR() -> int\n"
+             "getIR() -> int\n\n"
              "Retrieve the index register.\n"
              "Returns\n"
              "-------\n"
@@ -233,7 +235,7 @@ py8_emulatorGetSP(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_SP,
-             "getSP() -> int\n"
+             "getSP() -> int\n\n"
              "Retrieve the stack pointer.\n"
              "Returns\n"
              "-------\n"
@@ -241,6 +243,9 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_SP,
              "\tThe current value of the stack pointer."
 );
 
+/**
+* @brief Retrieve the current value of a given V-register.
+*/
 static PyObject*
 py8_emulatorGetRegister(PyObject* self, PyObject* args, PyObject* kwargs){
     int index;
@@ -259,7 +264,7 @@ py8_emulatorGetRegister(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTER,
-             "getRegister(index: int) -> int\n"
+             "getRegister(index: int) -> int\n\n"
              "Retrieve the value of a particular all purpose register.\n\n"
              "Parameters\n"
              "----------\n"
@@ -275,6 +280,9 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTER,
              "\tIf the register index is not valid, i.e. index < 0 or index => 16."
 );
 
+/**
+* @brief Retrieve the current values of all V-registers.
+*/
 static PyObject*
 py8_emulatorGetRegisters(PyObject* self, PyObject* args){
     UNUSED(args);
@@ -296,14 +304,17 @@ py8_emulatorGetRegisters(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTERS,
-             "getRegisters() -> List[int]\n"
-             "Retrieve all values of the registers.\n"
+             "getRegisters() -> Annotated[List[int], 16]\n\n"
+             "Retrieve all values of the all porpuse registers.\n"
              "Returns\n"
              "-------\n"
-             "List[int]\n"
+             "Annotated[List[int], 16]\n"
              "\tThe current value of the registers."
 );
 
+/**
+* @brief Retrieve the current values array representation of the screen.
+*/
 static PyObject*
 py8_emulatorGetGraphics(PyObject* self, PyObject* args){
     UNUSED(args);
@@ -323,12 +334,12 @@ py8_emulatorGetGraphics(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_GRAPHICS,
-             "getGraphics() -> List[bool]\n"
+             "getGraphics() -> Annotated[List[bool], 2048]\n\n"
              "Retrieve the graphics list representation.\n"
              "Returns\n"
              "-------\n"
-             "List[bool]\n"
-             "\tThe current value of the graphic list representation."
+             "Annotated[List[bool], 2048]\n"
+             "\tThe current values of pixels."
 );
 
 static PyObject*
@@ -352,12 +363,12 @@ py8_emulatorGetStack(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_STACK,
-             "getStack() -> List[int]\n"
+             "getStack() -> Annotated[List[int],16]\n\n"
              "Retrieve the stack list representation.\n"
              "Returns\n"
              "-------\n"
-             "List[int]\n"
-             "\tThe current value of the stack list representation."
+             "Annotated[List[int],16]\n"
+             "\tThe current values of the stack."
 );
 
 static PyObject*
@@ -379,16 +390,16 @@ py8_emulatorGetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
-             "getKeyValue(key: int) -> bool\n"
+             "getKeyValue(key: int) -> bool\n\n"
              "Retrieve the graphics list representation.\n"
              "Attributes\n"
              "----------\n"
              "key: int\n"
-             "\tThe key index to be retrieved. 0 <= key <= 15\n\n"
+             "\tThe key index to be retrieved. 0 <= key <= 15\n"
              "Returns\n"
              "-------\n"
              "bool\n"
-             "\tThe current value of the requested key."
+             "\tThe current value of the requested key.\n"
              "Raises\n"
              "------\n"
              "IndexError\n"
@@ -401,44 +412,66 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
 */
 
 static PyObject*
-py8_emulatorSetMode(PyObject* self, PyObject* args, PyObject* kwargs){
-    int mode;
+py8_emulatorTurnFlagsOn(PyObject* self, PyObject* args, PyObject* kwargs){
+    int flags;
     char* kwlist[] = {
-        "implm",
+        "flags",
         NULL,
     };
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &mode)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &flags)){
         return NULL;
     }
-    switch (mode) {
-        case 0:
-            CAST_PTR(Py8Emulator, self)->ob_cpu.mode = PY8_IMPLM_MODE_COSMAC_VIP;
-            break;
-        case 1:
-            CAST_PTR(Py8Emulator, self)->ob_cpu.mode = PY8_IMPLM_MODE_MODERN;
-            break;
-        default:
-            PyErr_Format(PyExc_ValueError, "Value %d is invalid for implementation.", mode);
-            break;
-    }
+    CAST_PTR(Py8Emulator, self)->ob_cpu.implm_flags |= ((uint8_t) flags);
     Py_RETURN_NONE;
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_MODE,
-             "setMode(implm: int) -> None\n"
+PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_ON,
+             "turnFlagsOn(flags: int) -> None\n\n"
              "Modify the emulator's implementation mode.\n\n"
              "Attributes\n"
              "----------\n"
-             "implm: int\n"
-             "\tWhich implementation to use. Possible values are:\n"
-             "\t\t-0: The original COSMAC-VIP implementation.\n"
-             "\t\t-1: Modern implementations.\n"
+             "flags: int\n"
+             "\tWhich implementation to toggle on. Possible values has to be a "
+             "bitwise or combination of the following:\n"
+             "\t\t-0: IMPLM_MODE_BNNN_USE_VX.\n"
+             "\t\t-1: IMPLM_MODE_SHIFTS_USE_VY.\n"
+             "\t\t-2: IMPLM_MODE_FX_CHANGE_I.\n"
              "Raises\n"
              "------\n"
              "ValueError\n"
              "\tIf the implm is not a valid value."
 );
 
+static PyObject*
+py8_emulatorTurnFlagsOff(PyObject* self, PyObject* args, PyObject* kwargs){
+    int flags;
+    char* kwlist[] = {
+        "flags",
+        NULL,
+    };
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &flags)){
+        return NULL;
+    }
+    CAST_PTR(Py8Emulator, self)->ob_cpu.implm_flags ^= ((uint8_t) flags);
+    Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_OFF,
+             "turnFlagsOff(flags: int) -> None\n\n"
+             "Turn the selected implementation flags off.\n\n"
+             "Attributes\n"
+             "----------\n"
+             "flags: int\n"
+             "\tWhich implementation to toggle on. Possible values has to be a "
+             "bitwise or combination of the following:\n"
+             "\t\t-0: IMPLM_MODE_BNNN_USE_VX.\n"
+             "\t\t-1: IMPLM_MODE_SHIFTS_USE_VY.\n"
+             "\t\t-2: IMPLM_MODE_FX_CHANGE_I.\n"
+             "Raises\n"
+             "------\n"
+             "ValueError\n"
+             "\tIf the implm is not a valid value."
+);
 static PyObject*
 py8_emulatorSetRunning(PyObject* self, PyObject* args, PyObject* kwargs){
     bool is_running;
@@ -454,7 +487,7 @@ py8_emulatorSetRunning(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_RUNNING,
-             "setRunning(is_running: bool) -> None\n"
+             "setRunning(is_running: bool) -> None\n\n"
              "Determine wether the CPU is running.\n\n"
              "Attributes\n"
              "----------\n"
@@ -464,7 +497,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_RUNNING,
 
 static PyObject*
 py8_emulatorSetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
-    int index = 0;
+    int index;
     bool value;
     char* kwlist[] = {
         "key",
@@ -483,7 +516,7 @@ py8_emulatorSetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_KEY_VALUE,
-             "setKeyValue(key: int, value: bool) -> None\n"
+             "setKeyValue(key: int, value: bool) -> None\n\n"
              "Modifies a given key.\n"
              "Attributes\n"
              "----------\n"
@@ -512,15 +545,15 @@ _py8_emulatorExecOpc(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
     Py8Opcode opc = py8_opcodeInit((uint16_t) code);
-    Py8Instruction instruction = py8_getInstruction(opc);
+    Py8Instruction instruction = py8_opcodeDecode(opc);
     enum Py8ExecutionOutput out = instruction.exec(&CAST_PTR(Py8Emulator, self)->ob_cpu, opc, instruction.code);
     return PyLong_FromLong((long) out);
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EXEC_OPT,
-             "_execOpc(opcode: int) -> int\n"
-             "Execute a step in the emulation process determined by the opcode.\n\n"
-             "This function should only be used to test CPU functionallities.\n\n"
+             "_execOpc(opcode: int) -> int\n\n"
+             "Execute a step in the emulation process determined by the opcode.\n"
+             "This function should only be used to test CPU functionallities.\n"
              "Attributes\n"
              "----------\n"
              "opc: int\n"
@@ -556,7 +589,7 @@ py8_emulatorLoadRom(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
-             "loadRom(rom_filepath: str) -> int\n"
+             "loadRom(rom_filepath: str) -> int\n\n"
              "Load a Chip8's ROM into memory\n"
              "Attributes\n"
              "----------\n"
@@ -572,8 +605,9 @@ static PyObject*
 py8_emulatorEmulationStep(PyObject* self, PyObject* args){
     UNUSED(args);
     Py8Instruction instruc;
-    enum Py8ExecutionOutput out = py8_cpuEmulate(&CAST_PTR(Py8Emulator, self)->ob_cpu,
+    enum Py8ExecutionOutput out = py8_cpuStep(&CAST_PTR(Py8Emulator, self)->ob_cpu,
                                                  &instruc);
+    printf("%s\n", instruc.code);
     if (out != PY8_EXECOUT_SUCCESS){
         CAST_PTR(Py8Emulator, self)->ob_is_running = false;
     }
@@ -581,7 +615,7 @@ py8_emulatorEmulationStep(PyObject* self, PyObject* args){
 }
 
 PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EMU_STEP,
-             "emulationStep() -> int\n"
+             "emulationStep() -> int\n\n"
              "Execute one step in the emulation process\n"
              "Returns\n"
              "-------\n"
@@ -595,9 +629,9 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EMU_STEP,
 static struct PyMethodDef py8_emulator_methods[] = {
     {
         .ml_name = "getMode",
-        .ml_meth = py8_emulatorGetMode,
+        .ml_meth = py8_emulatorGetFlags,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_MODE,
+        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_FLAGS,
     },
     {
         .ml_name = "getPC",
@@ -660,10 +694,16 @@ static struct PyMethodDef py8_emulator_methods[] = {
         .ml_doc = PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
     },
     {
-        .ml_name = "setMode",
-        .ml_meth = (PyCFunction) py8_emulatorSetMode,
+        .ml_name = "turnFlagsOn",
+        .ml_meth = (PyCFunction) py8_emulatorTurnFlagsOn,
         .ml_flags = METH_VARARGS | METH_KEYWORDS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_SET_MODE,
+        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_ON,
+    },
+    {
+        .ml_name = "turnFlagsOff",
+        .ml_meth = (PyCFunction) py8_emulatorTurnFlagsOff,
+        .ml_flags = METH_VARARGS | METH_KEYWORDS,
+        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_OFF,
     },
     {
         .ml_name = "setRunning",
@@ -790,12 +830,13 @@ PyInit_py8core(void){
     PyModule_AddIntConstant(module, "SIZE_GRAPHICS_WIDTH", PY8_GRAPHICS_WIDTH);
     PyModule_AddIntConstant(module, "SIZE_GRAPHICS_HEIGHT", PY8_GRAPHICS_HEIGTH);
     PyModule_AddIntConstant(module, "SIZE_GRAPHICS", PY8_SIZE_GRAPHICS);
-    PyModule_AddIntConstant(module, "SIZE_FONTSET_PIXELS", PY8_SIZE_FONTSET_PIXEL);
-    PyModule_AddIntConstant(module, "SIZE_FONTSET_SPRITE", PY8_SIZE_FONTSET_SPRITE);
+    PyModule_AddIntConstant(module, "SIZE_FONTSET_PIXELS", PY8_SIZE_FONTSET_PIXELS);
+    PyModule_AddIntConstant(module, "SIZE_FONTSET_SPRITE", PY8_SIZE_FONTSET_PIXEL_PER_SPRITE);
     PyModule_AddIntConstant(module, "MEM_ADDR_PROGRM_START", PY8_MEM_ADDR_PROG_START);
     PyModule_AddIntConstant(module, "MEM_ADDR_FONTSET_START", PY8_MEM_ADDR_FONTSET_START);
-    PyModule_AddIntConstant(module, "IMPL_MODE_COSMAC_VIP", PY8_IMPLM_MODE_COSMAC_VIP);
-    PyModule_AddIntConstant(module, "IMPL_MODE_MODERN", PY8_IMPLM_MODE_MODERN);
+    PyModule_AddIntConstant(module, "IMPL_MODE_SHIFTS_USE_VY", PY8_IMPLM_MODE_SHIFTS_USE_VY);
+    PyModule_AddIntConstant(module, "IMPL_MODE_BNNN_USE_VX", PY8_IMPLM_MODE_BNNN_USE_VX);
+    PyModule_AddIntConstant(module, "IMPL_MODE_FX_CHANGE_I", PY8_IMPLM_MODE_FX_CHANGE_I);
     return module;
 }
 

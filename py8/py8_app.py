@@ -11,10 +11,22 @@ from py8_screen import Py8Screen
 PARENT_DIR: str = 'py8'
 
 class Py8App(QApplication):
+    """
+    Py8 Emulator.
+
+    Attributes
+    ----------
+
+    Parameters
+    ----------
+    """
     rom_filepath: str = NotImplemented
     py8_emulator: py8core.Py8Emulator = NotImplemented
     py8_main_win: Py8MainWindow = NotImplemented
     py8_screen: Py8Screen = NotImplemented
+    py8_impl_bnnn_uses_vx: bool = NotImplemented
+    py8_impl_fx_changes_ir: bool = NotImplemented
+    py8_impl_shifts_use_vy: bool = NotImplemented
     is_paused: bool = NotImplemented
     timer: QTimer = NotImplemented
     fps: int = NotImplemented
@@ -32,34 +44,84 @@ class Py8App(QApplication):
         return "Paused."
 
     @property
-    def CPU_KEY_MAP(self) -> Dict[int, Callable]:
+    def CPU_KEY_MAP(self) -> Dict[int, List[Callable]]:
         return {
             ## Chip8 keyset
-            Qt.Key.Key_1.value: lambda value: self.py8_emulator.setKeyValue(0x1, value),
-            Qt.Key.Key_2.value: lambda value: self.py8_emulator.setKeyValue(0x2, value),
-            Qt.Key.Key_3.value: lambda value: self.py8_emulator.setKeyValue(0x3, value),
-            Qt.Key.Key_C.value: lambda value: self.py8_emulator.setKeyValue(0xC, value),
+            Qt.Key.Key_1: [
+                lambda: self.py8_emulator.setKeyValue(0x1, True),
+                lambda: self.py8_emulator.setKeyValue(0x1, False),
+            ],
+            Qt.Key.Key_2: [
+                lambda: self.py8_emulator.setKeyValue(0x2, True),
+                lambda: self.py8_emulator.setKeyValue(0x2, False),
+            ],
+            Qt.Key.Key_3: [
+                lambda: self.py8_emulator.setKeyValue(0x3, True),
+                lambda: self.py8_emulator.setKeyValue(0x3, False),
+            ],
+            Qt.Key.Key_4: [
+                lambda: self.py8_emulator.setKeyValue(0xC, True),
+                lambda: self.py8_emulator.setKeyValue(0xC, False),
+            ],
 
-            Qt.Key.Key_Q.value: lambda value: self.py8_emulator.setKeyValue(0x4, value),
-            Qt.Key.Key_W.value: lambda value: self.py8_emulator.setKeyValue(0x5, value),
-            Qt.Key.Key_E.value: lambda value: self.py8_emulator.setKeyValue(0x6, value),
-            Qt.Key.Key_R.value: lambda value: self.py8_emulator.setKeyValue(0xD, value),
 
-            Qt.Key.Key_A.value: lambda value: self.py8_emulator.setKeyValue(0x7, value),
-            Qt.Key.Key_S.value: lambda value: self.py8_emulator.setKeyValue(0x8, value),
-            Qt.Key.Key_D.value: lambda value: self.py8_emulator.setKeyValue(0x9, value),
-            Qt.Key.Key_F.value: lambda value: self.py8_emulator.setKeyValue(0xE, value),
+            Qt.Key.Key_Q: [
+                lambda: self.py8_emulator.setKeyValue(0x4, True),
+                lambda: self.py8_emulator.setKeyValue(0x4, False),
+            ],
+            Qt.Key.Key_W: [
+                lambda: self.py8_emulator.setKeyValue(0x5, True),
+                lambda: self.py8_emulator.setKeyValue(0x5, False),
+            ],
+            Qt.Key.Key_E: [
+                lambda: self.py8_emulator.setKeyValue(0x6, True),
+                lambda: self.py8_emulator.setKeyValue(0x6, False),
+            ],
+            Qt.Key.Key_R: [
+                lambda: self.py8_emulator.setKeyValue(0xD, True),
+                lambda: self.py8_emulator.setKeyValue(0xD, False),
+            ],
 
-            Qt.Key.Key_Y.value: lambda value: self.py8_emulator.setKeyValue(0xA, value),
-            Qt.Key.Key_X.value: lambda value: self.py8_emulator.setKeyValue(0x0, value),
-            Qt.Key.Key_C.value: lambda value: self.py8_emulator.setKeyValue(0xB, value),
-            Qt.Key.Key_V.value: lambda value: self.py8_emulator.setKeyValue(0xF, value),
+            Qt.Key.Key_A: [
+                lambda: self.py8_emulator.setKeyValue(0xC, True),
+                lambda: self.py8_emulator.setKeyValue(0xC, False),
+            ],
+            Qt.Key.Key_S: [
+                lambda: self.py8_emulator.setKeyValue(0x8, True),
+                lambda: self.py8_emulator.setKeyValue(0x8, False),
+            ],
+            Qt.Key.Key_D: [
+                lambda: self.py8_emulator.setKeyValue(0x9, True),
+                lambda: self.py8_emulator.setKeyValue(0x9, False),
+            ],
+            Qt.Key.Key_F: [
+                lambda: self.py8_emulator.setKeyValue(0xE, True),
+                lambda: self.py8_emulator.setKeyValue(0xE, False),
+            ],
+
+            Qt.Key.Key_Y: [
+                lambda: self.py8_emulator.setKeyValue(0xA, True),
+                lambda: self.py8_emulator.setKeyValue(0xA, False),
+            ],
+            Qt.Key.Key_X: [
+                lambda: self.py8_emulator.setKeyValue(0x0, True),
+                lambda: self.py8_emulator.setKeyValue(0x0, False),
+            ],
+            Qt.Key.Key_C: [
+                lambda: self.py8_emulator.setKeyValue(0xB, True),
+                lambda: self.py8_emulator.setKeyValue(0xB, False),
+            ],
+            Qt.Key.Key_V: [
+                lambda: self.py8_emulator.setKeyValue(0xF, True),
+                lambda: self.py8_emulator.setKeyValue(0xF, False),
+            ],
         }
     @property
     def APP_KEY_MAP(self) -> Dict[int, Callable]:
         return {
-            Qt.Key.Key_P.value: lambda: self.pause,
-            Qt.Key.Key_Escape.value: lambda: self.py8_main_win.close
+            Qt.Key.Key_P: lambda: self.pause(),
+            Qt.Key.Key_Escape: lambda: self.py8_main_win.close(),
+            Qt.Key.Key_L: lambda: self.loadRom(),
         }
 
     @property
@@ -75,9 +137,8 @@ class Py8App(QApplication):
         self.initCore()
         self.initUI()
         self.py8_main_win.show()
-        self.timer = QTimer(self)
         self.timer.timeout.connect(self.emulate)
-        self.timer.start(1000 // self.fps)
+        self.timer.start(500)
 
     def initUI(self) -> None:
         self.py8_main_win = Py8MainWindow("Py8 Chip8 Emulator",
@@ -93,10 +154,13 @@ class Py8App(QApplication):
         self.initMenus()
 
     def initCore(self) -> None:
+        self.py8_impl_shifts_use_vy = False
+        self.py8_impl_bnnn_uses_vx = False
+        self.py8_impl_fx_changes_ir = False
         self.timer = QTimer()
         self.is_paused = False
         self.fps = 60
-        self.py8_emulator = py8core.Py8Emulator(implm = py8core.IMPL_MODE_COSMAC_VIP)
+        self.py8_emulator = py8core.Py8Emulator(implm_flags = 0)
 
     def initMenus(self) -> None:
         # File menu
@@ -110,8 +174,9 @@ class Py8App(QApplication):
         self.py8_main_win.addMenuItem("Options", "Save state", self.saveState)
         # Implementation
         self.py8_main_win.addMenu("Implementation")
-        self.py8_main_win.addCheckMenu('Implementation', "COSMAC VIP", True, self.setImplmModeCOSMAC)
-        self.py8_main_win.addCheckMenu('Implementation', "Modern", False, self.setImplmModeMODERN)
+        self.py8_main_win.addCheckMenu('Implementation', "Shifts use VY", False, self.implmModeShifts)
+        self.py8_main_win.addCheckMenu('Implementation', "BNNN uses VX", False, self.implmModeBNNN)
+        self.py8_main_win.addCheckMenu('Implementation', "FX changes I", False, self.implmModeFX)
         # Help Menu
         self.py8_main_win.addMenu("Help")
         self.py8_main_win.addMenuItem("Help", "Key mappings", self.showKeyBoardMap)
@@ -142,6 +207,8 @@ class Py8App(QApplication):
                 self.setStatusBarRunning()
 
     def loadRom(self) -> None:
+        if self.py8_emulator.is_running:
+            self.resetEmulation()
         self.rom_filepath = QFileDialog.getOpenFileName(
             parent = self.py8_main_win,
             caption = "Select a ROM file",
@@ -164,13 +231,29 @@ class Py8App(QApplication):
                 case _:
                     pass
 
-    def setImplmModeCOSMAC(self) -> None:
-        self.py8_emulator.setMode(py8core.IMPL_MODE_COSMAC_VIP)
-        self.py8_main_win.checkable_actions['Modern'].setChecked(False)
+    def implmModeShifts(self) -> None:
+        if self.py8_main_win.checkable_actions['Shifts use VY'].isChecked():
+            self.py8_emulator.turnFlagsOff(py8core.IMPL_MODE_SHIFTS_USE_VY)
+            self.py8_main_win.checkable_actions['Shifts use VY'].setChecked(False)
+        else:
+            self.py8_emulator.turnFlagsOn(py8core.IMPL_MODE_SHIFTS_USE_VY)
+            self.py8_main_win.checkable_actions['Shifts use VY'].setChecked(True)
 
-    def setImplmModeMODERN(self) -> None:
-        self.py8_emulator.setMode(py8core.IMPL_MODE_MODERN)
-        self.py8_main_win.checkable_actions['COSMAC VIP'].setChecked(False)
+    def implmModeBNNN(self) -> None:
+        if self.py8_main_win.checkable_actions['BNNN uses VX'].isChecked():
+            self.py8_emulator.turnFlagsOff(py8core.IMPL_MODE_SHIFTS_USE_VY)
+            self.py8_main_win.checkable_actions['BNNN uses VX'].setChecked(False)
+        else:
+            self.py8_emulator.turnFlagsOn(py8core.IMPL_MODE_SHIFTS_USE_VY)
+            self.py8_main_win.checkable_actions['BNNN uses VX'].setChecked(True)
+
+    def implmModeFX(self) -> None:
+        if self.py8_main_win.checkable_actions['FX changes I'].isChecked():
+            self.py8_emulator.turnFlagsOff(py8core.IMPL_MODE_SHIFTS_USE_VY)
+            self.py8_main_win.checkable_actions['FX changes I'].setChecked(False)
+        else:
+            self.py8_emulator.turnFlagsOn(py8core.IMPL_MODE_SHIFTS_USE_VY)
+            self.py8_main_win.checkable_actions['FX changes I'].setChecked(True)
 
     def emulate(self) -> None:
         if self.is_paused or (not self.py8_emulator.is_running):
@@ -191,10 +274,19 @@ class Py8App(QApplication):
                 pass
         self.handleSound(self.py8_emulator.getST())
         self.py8_screen.updateScreen(self.py8_emulator.getGraphics())
-        # QTimer.singleShot(1, self.emulate)
 
     def resetEmulation(self) -> None:
-        pass
+        self.py8_screen.clearScreen()
+        del(self.py8_emulator)
+        impl_flags = 0
+        if self.py8_impl_shifts_use_vy:
+            impl_flags |= 1
+        if self.py8_impl_bnnn_uses_vx:
+            impl_flags |= (1 << 1)
+        if self.py8_impl_fx_changes_ir:
+            impl_flags |= (1 << 2)
+        self.py8_emulator = py8core.Py8Emulator(implm_flags = impl_flags)
+        self.setStatusBarDefualt()
 
     def saveState(self) -> None:
         pass

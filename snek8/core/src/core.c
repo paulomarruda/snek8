@@ -2,13 +2,13 @@
 * @file core.c
 * @author Paulo Arruda
 * @license GPL-3
-* @brief Implementation of the Python py8core extension module. This module is
-* centered at the new bilt-in type Py8EMulator, that is responsible to bridge
+* @brief Implementation of the Python Snek8 extension module. This module is
+* centered at the new bilt-in type Snek8EMulator, that is responsible to bridge
 * the information between the frontend and the CPU and its routines.
 * @note Built with Python 3.13.
 */
-#ifndef PY8_CORE_C
-    #define PY8_CORE_C
+#ifndef SNEK8_CORE_C
+    #define SNEK8_CORE_C
 #ifdef __cplusplus
     extern "C"{
 #endif
@@ -17,13 +17,13 @@
 
 typedef struct{
     PyObject_HEAD
-    Py8CPU ob_cpu;
+    Snek8CPU ob_cpu;
     bool ob_is_running;
     char ob_last_instruc[30];
-} Py8Emulator;
+} Snek8Emulator;
 
-PyDoc_STRVAR(PY8_STR_DOC_PY8_EMULATOR,
-             "Py8Emulator(implm_flags: int = 0)\n\n"
+PyDoc_STRVAR(SNEK8_STR_DOC_SNEK8_EMULATOR,
+             "Snek8Emulator(implm_flags: int = 0)\n\n"
              "Chip8's emulator.\n\n"
              "Attributes\n"
              "----------\n"
@@ -43,7 +43,7 @@ PyDoc_STRVAR(PY8_STR_DOC_PY8_EMULATOR,
              "\t\t-2: IMPLM_MODE_FX_CHANGE_I.\n"
 );
 
-PyDoc_STRVAR(PY8_STR_DOC_EMULATOR_PY8_EMULATOR_IS_RUNNING,
+PyDoc_STRVAR(SNEK8_STR_DOC_EMULATOR_SNEK8_EMULATOR_IS_RUNNING,
     "is_running: int\n"
     "\tControls whether the emulation is running.\n"
     "Note\n"
@@ -51,7 +51,7 @@ PyDoc_STRVAR(PY8_STR_DOC_EMULATOR_PY8_EMULATOR_IS_RUNNING,
     "This is a read-only attribute that can only be modified by the emulation process.\n"
 );
 
-PyDoc_STRVAR(PY8_STR_DOC_EMULATOR_PY8_EMULATOR_LAST_INSTRUC,
+PyDoc_STRVAR(SNEK8_STR_DOC_EMULATOR_SNEK8_EMULATOR_LAST_INSTRUC,
     "last_instrc: int\n"
     "\nThe last executed instruction."
     "Note\n"
@@ -62,20 +62,20 @@ PyDoc_STRVAR(PY8_STR_DOC_EMULATOR_PY8_EMULATOR_LAST_INSTRUC,
 /**
 * @brief Declaration of the emulator attributes.
 */
-static PyMemberDef py8_emulator_members[] = {
+static PyMemberDef snek8_emulator_members[] = {
     {
         .name = "is_running",
         .type = Py_T_BOOL,
-        .offset = offsetof(Py8Emulator, ob_is_running),
+        .offset = offsetof(Snek8Emulator, ob_is_running),
         .flags = Py_READONLY, 
-        .doc = PY8_STR_DOC_EMULATOR_PY8_EMULATOR_IS_RUNNING,
+        .doc = SNEK8_STR_DOC_EMULATOR_SNEK8_EMULATOR_IS_RUNNING,
     },
     {
         .name = "last_instruc",
         .type = Py_T_STRING,
-        .offset = offsetof(Py8Emulator, ob_last_instruc),
+        .offset = offsetof(Snek8Emulator, ob_last_instruc),
         .flags = Py_READONLY, 
-        .doc = PY8_STR_DOC_EMULATOR_PY8_EMULATOR_LAST_INSTRUC,
+        .doc = SNEK8_STR_DOC_EMULATOR_SNEK8_EMULATOR_LAST_INSTRUC,
     },
     {NULL},
 };
@@ -89,7 +89,7 @@ static PyMemberDef py8_emulator_members[] = {
 * @brief C interface for the __del__ method.
 */
 static void
-py8_emulatorDel(PyObject* self){
+snek8_emulatorDel(PyObject* self){
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -97,7 +97,7 @@ py8_emulatorDel(PyObject* self){
 * @brief C interface for the __new__ method.
 */
 static PyObject*
-py8_emulatorNew(PyTypeObject* subtype, PyObject* args, PyObject* kwargs){
+snek8_emulatorNew(PyTypeObject* subtype, PyObject* args, PyObject* kwargs){
     UNUSED(args);
     UNUSED(kwargs);
     PyObject* self = subtype->tp_alloc(subtype, 0);
@@ -112,7 +112,7 @@ py8_emulatorNew(PyTypeObject* subtype, PyObject* args, PyObject* kwargs){
 * @brief C interface for the __init__ method.
 */
 static int
-py8_emulatorInit(PyObject* self, PyObject* args, PyObject* kwargs){
+snek8_emulatorInit(PyObject* self, PyObject* args, PyObject* kwargs){
     int implm_flags = 0;
     char* kwlist[] = {
         "implm_flags",
@@ -121,12 +121,12 @@ py8_emulatorInit(PyObject* self, PyObject* args, PyObject* kwargs){
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist, &implm_flags)){
         return -1;
     }
-    CAST_PTR(Py8Emulator, self)->ob_is_running = false;
+    CAST_PTR(Snek8Emulator, self)->ob_is_running = false;
     if (implm_flags < 0 || implm_flags >= 255){
         PyErr_Format(PyExc_ValueError, "Value %d is invalid for implementation.", implm_flags);
         return -1;
     }
-    py8_cpuInit(&CAST_PTR(Py8Emulator, self)->ob_cpu, (uint8_t) implm_flags);
+    snek8_cpuInit(&CAST_PTR(Snek8Emulator, self)->ob_cpu, (uint8_t) implm_flags);
     return 0;
 }
 
@@ -139,12 +139,12 @@ py8_emulatorInit(PyObject* self, PyObject* args, PyObject* kwargs){
 * @brief Retrieve the implementation flags.
 */
 static PyObject*
-py8_emulatorGetFlags(PyObject* self, PyObject* args){
+snek8_emulatorGetFlags(PyObject* self, PyObject* args){
     UNUSED(args);
-    return PyLong_FromLong((long) CAST_PTR(Py8Emulator, self)->ob_cpu.implm_flags);
+    return PyLong_FromLong((long) CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_FLAGS,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_FLAGS,
              "getFlags() -> int\n\n"
              "Retrieve the implementation flags.\n"
              "Returns\n"
@@ -157,12 +157,12 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_FLAGS,
 * @brief Retrieve the program counter.
 */
 static PyObject*
-py8_emulatorGetPC(PyObject* self, PyObject* args){
+snek8_emulatorGetPC(PyObject* self, PyObject* args){
     UNUSED(args);
-    return Py_BuildValue("i", CAST_PTR(Py8Emulator, self)->ob_cpu.pc);
+    return Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.pc);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_PC,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_PC,
              "getPC() -> int\n\n"
              "Retrieve the program counter.\n"
              "Returns\n"
@@ -175,12 +175,12 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_PC,
 * @brief Retrieve the delay timer register.
 */
 static PyObject*
-py8_emulatorGetDT(PyObject* self, PyObject* args){
+snek8_emulatorGetDT(PyObject* self, PyObject* args){
     UNUSED(args);
-    return Py_BuildValue("i", CAST_PTR(Py8Emulator, self)->ob_cpu.dt);
+    return Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.dt);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_DT,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_DT,
              "getDT() -> int\n\n"
              "Retrieve the delay timer register.\n"
              "Returns\n"
@@ -193,12 +193,12 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_DT,
 * @brief Retrieve the sound timer register.
 */
 static PyObject*
-py8_emulatorGetST(PyObject* self, PyObject* args){
+snek8_emulatorGetST(PyObject* self, PyObject* args){
     UNUSED(args);
-    return Py_BuildValue("i", CAST_PTR(Py8Emulator, self)->ob_cpu.st);
+    return Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.st);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_ST,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_ST,
              "getST() -> int\n\n"
              "Retrieve the sound timer register.\n"
              "Returns\n"
@@ -211,12 +211,12 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_ST,
 * @brief Retrieve the index register.
 */
 static PyObject*
-py8_emulatorGetIR(PyObject* self, PyObject* args){
+snek8_emulatorGetIR(PyObject* self, PyObject* args){
     UNUSED(args);
-    return Py_BuildValue("i", CAST_PTR(Py8Emulator, self)->ob_cpu.ir);
+    return Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.ir);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_IR,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_IR,
              "getIR() -> int\n\n"
              "Retrieve the index register.\n"
              "Returns\n"
@@ -229,12 +229,12 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_IR,
 * @brief Retrieve the stack pointer.
 */
 static PyObject*
-py8_emulatorGetSP(PyObject* self, PyObject* args){
+snek8_emulatorGetSP(PyObject* self, PyObject* args){
     UNUSED(args);
-    return Py_BuildValue("i", CAST_PTR(Py8Emulator, self)->ob_cpu.sp);
+    return Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.sp);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_SP,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_SP,
              "getSP() -> int\n\n"
              "Retrieve the stack pointer.\n"
              "Returns\n"
@@ -247,7 +247,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_SP,
 * @brief Retrieve the current value of a given V-register.
 */
 static PyObject*
-py8_emulatorGetRegister(PyObject* self, PyObject* args, PyObject* kwargs){
+snek8_emulatorGetRegister(PyObject* self, PyObject* args, PyObject* kwargs){
     int index;
     char* kwlist[] = {
         "index",
@@ -260,10 +260,10 @@ py8_emulatorGetRegister(PyObject* self, PyObject* args, PyObject* kwargs){
         PyErr_Format(PyExc_IndexError, "Chip8 register's index ranges from 0 to 15 (inclusive).");
         return NULL;
     }
-    return Py_BuildValue("i", CAST_PTR(Py8Emulator, self)->ob_cpu.registers[index]);
+    return Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.registers[index]);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTER,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_REGISTER,
              "getRegister(index: int) -> int\n\n"
              "Retrieve the value of a particular all purpose register.\n\n"
              "Parameters\n"
@@ -284,15 +284,15 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTER,
 * @brief Retrieve the current values of all V-registers.
 */
 static PyObject*
-py8_emulatorGetRegisters(PyObject* self, PyObject* args){
+snek8_emulatorGetRegisters(PyObject* self, PyObject* args){
     UNUSED(args);
-    PyObject* register_list = PyList_New(PY8_SIZE_REGISTERS);
+    PyObject* register_list = PyList_New(SNEK8_SIZE_REGISTERS);
     if (!register_list){
         PyErr_SetString(PyExc_MemoryError, "Failed to create register list.");
         return NULL;
     }
-    for (size_t i = 0; i < PY8_SIZE_REGISTERS; i++){
-        PyObject* value = Py_BuildValue("i", CAST_PTR(Py8Emulator, self)->ob_cpu.registers[i]);
+    for (size_t i = 0; i < SNEK8_SIZE_REGISTERS; i++){
+        PyObject* value = Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.registers[i]);
         if (!value){
             PyErr_SetString(PyExc_MemoryError, "Failed to create register list element.");
             Py_DECREF(register_list);
@@ -303,7 +303,7 @@ py8_emulatorGetRegisters(PyObject* self, PyObject* args){
     return register_list;
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTERS,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_REGISTERS,
              "getRegisters() -> Annotated[List[int], 16]\n\n"
              "Retrieve all values of the all porpuse registers.\n"
              "Returns\n"
@@ -316,15 +316,15 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_REGISTERS,
 * @brief Retrieve the current values array representation of the screen.
 */
 static PyObject*
-py8_emulatorGetGraphics(PyObject* self, PyObject* args){
+snek8_emulatorGetGraphics(PyObject* self, PyObject* args){
     UNUSED(args);
-    PyObject* graphics_list = PyList_New(PY8_SIZE_GRAPHICS);
+    PyObject* graphics_list = PyList_New(SNEK8_SIZE_GRAPHICS);
     if (!graphics_list){
         PyErr_SetString(PyExc_MemoryError, "Failed to create graphics list.");
         return NULL;
     }
-    for (size_t i = 0; i < PY8_SIZE_GRAPHICS; i++){
-        if (CAST_PTR(Py8Emulator, self)->ob_cpu.graphics[i]){
+    for (size_t i = 0; i < SNEK8_SIZE_GRAPHICS; i++){
+        if (CAST_PTR(Snek8Emulator, self)->ob_cpu.graphics[i]){
             PyList_SET_ITEM(graphics_list, i, Py_True);
         }else{
             PyList_SET_ITEM(graphics_list, i, Py_False);
@@ -333,7 +333,7 @@ py8_emulatorGetGraphics(PyObject* self, PyObject* args){
     return graphics_list;
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_GRAPHICS,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_GRAPHICS,
              "getGraphics() -> Annotated[List[bool], 2048]\n\n"
              "Retrieve the graphics list representation.\n"
              "Returns\n"
@@ -343,15 +343,15 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_GRAPHICS,
 );
 
 static PyObject*
-py8_emulatorGetStack(PyObject* self, PyObject* args){
+snek8_emulatorGetStack(PyObject* self, PyObject* args){
     UNUSED(args);
-    PyObject* stack_list = PyList_New(PY8_SIZE_STACK);
+    PyObject* stack_list = PyList_New(SNEK8_SIZE_STACK);
     if (!stack_list){
         PyErr_SetString(PyExc_MemoryError, "Failed to create stack list.");
         return NULL;
     }
-    for (size_t i = 0; i < PY8_SIZE_STACK; i++){
-        PyObject* value = Py_BuildValue("i", CAST_PTR(Py8Emulator, self)->ob_cpu.stack[i]);
+    for (size_t i = 0; i < SNEK8_SIZE_STACK; i++){
+        PyObject* value = Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.stack[i]);
         if (!value){
             PyErr_SetString(PyExc_MemoryError, "Failed to create register list element.");
             Py_DECREF(stack_list);
@@ -362,7 +362,7 @@ py8_emulatorGetStack(PyObject* self, PyObject* args){
     return stack_list;
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_STACK,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_STACK,
              "getStack() -> Annotated[List[int],16]\n\n"
              "Retrieve the stack list representation.\n"
              "Returns\n"
@@ -372,7 +372,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_STACK,
 );
 
 static PyObject*
-py8_emulatorGetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
+snek8_emulatorGetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
     int key;
     char* kwlist[] = {
         "index",
@@ -385,11 +385,11 @@ py8_emulatorGetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
         PyErr_Format(PyExc_IndexError, "Index must be between 0 and 15 (incl.). Value recieved: %d.", index);
         return NULL;
     }
-    bool value = py8_cpuGetKeyVal(CAST_PTR(Py8Emulator, self)->ob_cpu, key);
+    bool value = snek8_cpuGetKeyVal(CAST_PTR(Snek8Emulator, self)->ob_cpu, key);
     return value? Py_True: Py_False;
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_KEY_VALUE,
              "getKeyValue(key: int) -> bool\n\n"
              "Retrieve the graphics list representation.\n"
              "Attributes\n"
@@ -412,7 +412,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
 */
 
 static PyObject*
-py8_emulatorTurnFlagsOn(PyObject* self, PyObject* args, PyObject* kwargs){
+snek8_emulatorTurnFlagsOn(PyObject* self, PyObject* args, PyObject* kwargs){
     int flags;
     char* kwlist[] = {
         "flags",
@@ -421,11 +421,11 @@ py8_emulatorTurnFlagsOn(PyObject* self, PyObject* args, PyObject* kwargs){
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &flags)){
         return NULL;
     }
-    CAST_PTR(Py8Emulator, self)->ob_cpu.implm_flags |= ((uint8_t) flags);
+    CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags |= ((uint8_t) flags);
     Py_RETURN_NONE;
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_ON,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_TURN_FLAGS_ON,
              "turnFlagsOn(flags: int) -> None\n\n"
              "Modify the emulator's implementation mode.\n\n"
              "Attributes\n"
@@ -443,7 +443,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_ON,
 );
 
 static PyObject*
-py8_emulatorTurnFlagsOff(PyObject* self, PyObject* args, PyObject* kwargs){
+snek8_emulatorTurnFlagsOff(PyObject* self, PyObject* args, PyObject* kwargs){
     int flags;
     char* kwlist[] = {
         "flags",
@@ -452,11 +452,11 @@ py8_emulatorTurnFlagsOff(PyObject* self, PyObject* args, PyObject* kwargs){
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &flags)){
         return NULL;
     }
-    CAST_PTR(Py8Emulator, self)->ob_cpu.implm_flags ^= ((uint8_t) flags);
+    CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags ^= ((uint8_t) flags);
     Py_RETURN_NONE;
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_OFF,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_TURN_FLAGS_OFF,
              "turnFlagsOff(flags: int) -> None\n\n"
              "Turn the selected implementation flags off.\n\n"
              "Attributes\n"
@@ -473,7 +473,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_OFF,
              "\tIf the implm is not a valid value."
 );
 static PyObject*
-py8_emulatorSetRunning(PyObject* self, PyObject* args, PyObject* kwargs){
+snek8_emulatorSetRunning(PyObject* self, PyObject* args, PyObject* kwargs){
     bool is_running;
     char* kwlist[] = {
         "is_running",
@@ -482,11 +482,11 @@ py8_emulatorSetRunning(PyObject* self, PyObject* args, PyObject* kwargs){
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "b", kwlist, &is_running)){
         return NULL;
     }
-    CAST_PTR(Py8Emulator, self)->ob_is_running = is_running;
+    CAST_PTR(Snek8Emulator, self)->ob_is_running = is_running;
     Py_RETURN_NONE;
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_RUNNING,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_SET_RUNNING,
              "setRunning(is_running: bool) -> None\n\n"
              "Determine wether the CPU is running.\n\n"
              "Attributes\n"
@@ -496,7 +496,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_RUNNING,
 );
 
 static PyObject*
-py8_emulatorSetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
+snek8_emulatorSetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
     int index;
     bool value;
     char* kwlist[] = {
@@ -511,11 +511,11 @@ py8_emulatorSetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
         PyErr_Format(PyExc_IndexError, "Key index must be between 0 and 15 (incl.). Value recieved: %d.", index);
         return NULL;
     }
-    py8_cpuSetKey(&CAST_PTR(Py8Emulator, self)->ob_cpu, index, value);
+    snek8_cpuSetKey(&CAST_PTR(Snek8Emulator, self)->ob_cpu, index, value);
     Py_RETURN_NONE;
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_KEY_VALUE,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_SET_KEY_VALUE,
              "setKeyValue(key: int, value: bool) -> None\n\n"
              "Modifies a given key.\n"
              "Attributes\n"
@@ -531,7 +531,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_SET_KEY_VALUE,
 );
 
 static PyObject*
-_py8_emulatorExecOpc(PyObject* self, PyObject* args, PyObject* kwargs){
+_snek8_emulatorExecOpc(PyObject* self, PyObject* args, PyObject* kwargs){
     int code = 0;
     char* kwlist[] = {
         "opcode",
@@ -544,13 +544,13 @@ _py8_emulatorExecOpc(PyObject* self, PyObject* args, PyObject* kwargs){
         PyErr_Format(PyExc_ValueError, "The opcode must be a valid 16-bit unsigned integer.");
         return NULL;
     }
-    Py8Opcode opc = py8_opcodeInit((uint16_t) code);
-    Py8Instruction instruction = py8_opcodeDecode(opc);
-    enum Py8ExecutionOutput out = instruction.exec(&CAST_PTR(Py8Emulator, self)->ob_cpu, opc, instruction.code);
+    Snek8Opcode opc = snek8_opcodeInit((uint16_t) code);
+    Snek8Instruction instruction = snek8_opcodeDecode(opc);
+    enum Snek8ExecutionOutput out = instruction.exec(&CAST_PTR(Snek8Emulator, self)->ob_cpu, opc, instruction.code);
     return PyLong_FromLong((long) out);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EXEC_OPT,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_EXEC_OPT,
              "_execOpc(opcode: int) -> int\n\n"
              "Execute a step in the emulation process determined by the opcode.\n"
              "This function should only be used to test CPU functionallities.\n"
@@ -569,7 +569,7 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EXEC_OPT,
 );
 
 static PyObject*
-py8_emulatorLoadRom(PyObject* self, PyObject* args, PyObject* kwargs){
+snek8_emulatorLoadRom(PyObject* self, PyObject* args, PyObject* kwargs){
     const char* rom_filepath = NULL;
     char* kwlist[] = {
         "rom_filepath",
@@ -581,14 +581,14 @@ py8_emulatorLoadRom(PyObject* self, PyObject* args, PyObject* kwargs){
     if (!rom_filepath){
         return NULL;
     }
-    enum Py8ExecutionOutput out = py8_cpuLoadRom(&CAST_PTR(Py8Emulator, self)->ob_cpu, rom_filepath);
-    if (out == PY8_EXECOUT_SUCCESS){
-        CAST_PTR(Py8Emulator, self)->ob_is_running = true;
+    enum Snek8ExecutionOutput out = snek8_cpuLoadRom(&CAST_PTR(Snek8Emulator, self)->ob_cpu, rom_filepath);
+    if (out == SNEK8_EXECOUT_SUCCESS){
+        CAST_PTR(Snek8Emulator, self)->ob_is_running = true;
     }
     return PyBool_FromLong((long) out);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_LOAD_ROM,
              "loadRom(rom_filepath: str) -> int\n\n"
              "Load a Chip8's ROM into memory\n"
              "Attributes\n"
@@ -602,19 +602,19 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
 );
 
 static PyObject*
-py8_emulatorEmulationStep(PyObject* self, PyObject* args){
+snek8_emulatorEmulationStep(PyObject* self, PyObject* args){
     UNUSED(args);
-    Py8Instruction instruc;
-    enum Py8ExecutionOutput out = py8_cpuStep(&CAST_PTR(Py8Emulator, self)->ob_cpu,
+    Snek8Instruction instruc;
+    enum Snek8ExecutionOutput out = snek8_cpuStep(&CAST_PTR(Snek8Emulator, self)->ob_cpu,
                                                  &instruc);
     printf("%s\n", instruc.code);
-    if (out != PY8_EXECOUT_SUCCESS){
-        CAST_PTR(Py8Emulator, self)->ob_is_running = false;
+    if (out != SNEK8_EXECOUT_SUCCESS){
+        CAST_PTR(Snek8Emulator, self)->ob_is_running = false;
     }
     return Py_BuildValue("i", out);
 }
 
-PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EMU_STEP,
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_EMU_STEP,
              "emulationStep() -> int\n\n"
              "Execute one step in the emulation process\n"
              "Returns\n"
@@ -626,114 +626,114 @@ PyDoc_STRVAR(PY8_DOC_STR_PY8_EMULATOR_EMU_STEP,
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 
-static struct PyMethodDef py8_emulator_methods[] = {
+static struct PyMethodDef snek8_emulator_methods[] = {
     {
         .ml_name = "getMode",
-        .ml_meth = py8_emulatorGetFlags,
+        .ml_meth = snek8_emulatorGetFlags,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_FLAGS,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_FLAGS,
     },
     {
         .ml_name = "getPC",
-        .ml_meth = py8_emulatorGetPC,
+        .ml_meth = snek8_emulatorGetPC,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_PC,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_PC,
     },
     {
         .ml_name = "getIR",
-        .ml_meth = py8_emulatorGetIR,
+        .ml_meth = snek8_emulatorGetIR,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_IR,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_IR,
     },
     {
         .ml_name = "getDT",
-        .ml_meth = py8_emulatorGetDT,
+        .ml_meth = snek8_emulatorGetDT,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_DT,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_DT,
     },
     {
         .ml_name = "getST",
-        .ml_meth = py8_emulatorGetST,
+        .ml_meth = snek8_emulatorGetST,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_ST,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_ST,
     },
     {
         .ml_name = "getSP",
-        .ml_meth = py8_emulatorGetSP,
+        .ml_meth = snek8_emulatorGetSP,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_SP,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_SP,
     },
     {
         .ml_name = "getGraphics",
-        .ml_meth = py8_emulatorGetGraphics,
+        .ml_meth = snek8_emulatorGetGraphics,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_GRAPHICS,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_GRAPHICS,
     },
     {
         .ml_name = "getStack",
-        .ml_meth = py8_emulatorGetStack,
+        .ml_meth = snek8_emulatorGetStack,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_STACK,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_STACK,
     },
     {
         .ml_name = "getRegisters",
-        .ml_meth = py8_emulatorGetRegisters,
+        .ml_meth = snek8_emulatorGetRegisters,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_REGISTERS,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_REGISTERS,
     },
     {
         .ml_name = "getRegister",
-        .ml_meth = (PyCFunction) py8_emulatorGetRegister,
+        .ml_meth = (PyCFunction) snek8_emulatorGetRegister,
         .ml_flags = METH_VARARGS | METH_KEYWORDS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_REGISTER,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_REGISTER,
     },
     {
         .ml_name = "loadRom",
-        .ml_meth = (PyCFunction) py8_emulatorLoadRom,
+        .ml_meth = (PyCFunction) snek8_emulatorLoadRom,
         .ml_flags = METH_VARARGS | METH_KEYWORDS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_LOAD_ROM,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_LOAD_ROM,
     },
     {
         .ml_name = "turnFlagsOn",
-        .ml_meth = (PyCFunction) py8_emulatorTurnFlagsOn,
+        .ml_meth = (PyCFunction) snek8_emulatorTurnFlagsOn,
         .ml_flags = METH_VARARGS | METH_KEYWORDS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_ON,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_TURN_FLAGS_ON,
     },
     {
         .ml_name = "turnFlagsOff",
-        .ml_meth = (PyCFunction) py8_emulatorTurnFlagsOff,
+        .ml_meth = (PyCFunction) snek8_emulatorTurnFlagsOff,
         .ml_flags = METH_VARARGS | METH_KEYWORDS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_TURN_FLAGS_OFF,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_TURN_FLAGS_OFF,
     },
     {
         .ml_name = "setRunning",
-        .ml_meth = (PyCFunction) py8_emulatorSetRunning,
+        .ml_meth = (PyCFunction) snek8_emulatorSetRunning,
         .ml_flags = METH_VARARGS | METH_KEYWORDS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_SET_RUNNING,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_SET_RUNNING,
     },
     {
         .ml_name = "getKeyValue",
-        .ml_meth = (PyCFunction) py8_emulatorGetKeyValue,
+        .ml_meth = (PyCFunction) snek8_emulatorGetKeyValue,
         .ml_flags = METH_VARARGS | METH_KEYWORDS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_GET_KEY_VALUE,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_KEY_VALUE,
     },
     {
         .ml_name = "setKeyValue",
-        .ml_meth = (PyCFunction) py8_emulatorSetKeyValue,
+        .ml_meth = (PyCFunction) snek8_emulatorSetKeyValue,
         .ml_flags = METH_VARARGS | METH_KEYWORDS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_SET_KEY_VALUE,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_SET_KEY_VALUE,
     },
     {
         .ml_name = "_execOpc",
-        .ml_meth = (PyCFunction) _py8_emulatorExecOpc,
+        .ml_meth = (PyCFunction) _snek8_emulatorExecOpc,
         .ml_flags = METH_VARARGS | METH_KEYWORDS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_EXEC_OPT,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_EXEC_OPT,
     },
     {
         .ml_name = "emulationStep",
-        .ml_meth = py8_emulatorEmulationStep,
+        .ml_meth = snek8_emulatorEmulationStep,
         .ml_flags = METH_NOARGS,
-        .ml_doc = PY8_DOC_STR_PY8_EMULATOR_EMU_STEP,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_EMU_STEP,
     },
     {NULL},
 };
@@ -749,21 +749,21 @@ static struct PyMethodDef module_meths[] = {
     {NULL},
 };
 
-static PyTypeObject Py8EmulatorType = {
+static PyTypeObject Snek8EmulatorType = {
      .ob_base = PyVarObject_HEAD_INIT(NULL, 0)
-     .tp_name = "py8core.Py8Emulator",
-     .tp_basicsize = sizeof(Py8Emulator),
+     .tp_name = "snek8.core.Snek8Emulator",
+     .tp_basicsize = sizeof(Snek8Emulator),
      .tp_itemsize = 0,
-     .tp_doc = PY8_STR_DOC_PY8_EMULATOR,
+     .tp_doc = SNEK8_STR_DOC_SNEK8_EMULATOR,
      .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-     .tp_new = (newfunc) py8_emulatorNew,
-     .tp_init = (initproc) py8_emulatorInit,
-     .tp_dealloc = (destructor) py8_emulatorDel,
-     .tp_members = py8_emulator_members,
-     .tp_methods = py8_emulator_methods,
+     .tp_new = (newfunc) snek8_emulatorNew,
+     .tp_init = (initproc) snek8_emulatorInit,
+     .tp_dealloc = (destructor) snek8_emulatorDel,
+     .tp_members = snek8_emulator_members,
+     .tp_methods = snek8_emulator_methods,
 };
 
-PyDoc_STRVAR(PY8_STR_DOC_PY8,
+PyDoc_STRVAR(SNEK8_STR_DOC_PY8,
     "CHIP8's core emulation process\n\n"
     "This module provide the core functionalities necessary for a\n"
     "CHIP8's emulation. It was based on the following documents:\n"
@@ -779,68 +779,68 @@ PyDoc_STRVAR(PY8_STR_DOC_PY8,
     "- 4) IMPL_MODE constants:\n"
 );
 
-static PyModuleDef py8_core = {
+static PyModuleDef snek8_core = {
     .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "py8core",
-    .m_doc = PY8_STR_DOC_PY8,
+    .m_name = "snek8.core",
+    .m_doc = SNEK8_STR_DOC_PY8,
     .m_size = -1,
     .m_methods = module_meths,
 };
 
 PyMODINIT_FUNC
-PyInit_py8core(void){
+PyInit_core(void){
     PyObject* module;
     Py_Initialize();
-    if (PyType_Ready(&Py8EmulatorType) < 0){
+    if (PyType_Ready(&Snek8EmulatorType) < 0){
         return NULL;
     }
-    module = PyModule_Create(&py8_core);
+    module = PyModule_Create(&snek8_core);
     if (!module){
         return NULL;
     }
-    Py_INCREF(&Py8EmulatorType);
-    if (PyModule_AddObject(module, "Py8Emulator", (PyObject*) &Py8EmulatorType)){
+    Py_INCREF(&Snek8EmulatorType);
+    if (PyModule_AddObject(module, "Snek8Emulator", (PyObject*) &Snek8EmulatorType)){
         Py_DECREF(module);
     }
     PyModule_AddIntConstant(module, "EXECOUT_SUCCESS",
-                            (long) PY8_EXECOUT_SUCCESS);
+                            (long) SNEK8_EXECOUT_SUCCESS);
     PyModule_AddIntConstant(module, "EXECOUT_INVALID_OPCODE",
-                            (long) PY8_EXECOUT_INVALID_OPCODE);
+                            (long) SNEK8_EXECOUT_INVALID_OPCODE);
     PyModule_AddIntConstant(module, "EXECOUT_STACK_EMPTY",
-                            (long) PY8_EXECOUT_STACK_EMPTY);
+                            (long) SNEK8_EXECOUT_STACK_EMPTY);
     PyModule_AddIntConstant(module, "EXECOUT_STACK_OVERFLOW",
-                            (long) PY8_EXECOUT_STACK_OVERFLOW);
+                            (long) SNEK8_EXECOUT_STACK_OVERFLOW);
     PyModule_AddIntConstant(module, "EXECOUT_MEM_ADDR_OUT_BOUNDS",
-                            (long) PY8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS);
+                            (long) SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS);
     PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_NOT_FOUND",
-                            (long) PY8_EXECOUT_ROM_FILE_NOT_FOUND);
+                            (long) SNEK8_EXECOUT_ROM_FILE_NOT_FOUND);
     PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_FAILED_TO_OPEN",
-                            (long) PY8_EXECOUT_ROM_FILE_FAILED_TO_OPEN);
+                            (long) SNEK8_EXECOUT_ROM_FILE_FAILED_TO_OPEN);
     PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_FAILED_TO_READ",
-                            (long) PY8_EXECOUT_ROM_FILE_FAILED_TO_READ);
+                            (long) SNEK8_EXECOUT_ROM_FILE_FAILED_TO_READ);
     PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM",
-                            (long) PY8_EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM);
+                            (long) SNEK8_EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM);
     PyModule_AddIntConstant(module, "EXECOUT_EMPTY_STRUCT",
-                            (long) PY8_EXECOUT_EMPTY_STRUCT);
-    PyModule_AddIntConstant(module, "SIZE_KEYSET", PY8_SIZE_KEYSET);
-    PyModule_AddIntConstant(module, "SIZE_STACK", PY8_SIZE_STACK);
-    PyModule_AddIntConstant(module, "SIZE_REGISTERS", PY8_SIZE_REGISTERS);
-    PyModule_AddIntConstant(module, "SIZE_RAM", PY8_SIZE_RAM);
-    PyModule_AddIntConstant(module, "SIZE_MAX_ROM_FILE", PY8_SIZE_MAX_ROM_FILE);
-    PyModule_AddIntConstant(module, "SIZE_GRAPHICS_WIDTH", PY8_GRAPHICS_WIDTH);
-    PyModule_AddIntConstant(module, "SIZE_GRAPHICS_HEIGHT", PY8_GRAPHICS_HEIGTH);
-    PyModule_AddIntConstant(module, "SIZE_GRAPHICS", PY8_SIZE_GRAPHICS);
-    PyModule_AddIntConstant(module, "SIZE_FONTSET_PIXELS", PY8_SIZE_FONTSET_PIXELS);
-    PyModule_AddIntConstant(module, "SIZE_FONTSET_SPRITE", PY8_SIZE_FONTSET_PIXEL_PER_SPRITE);
-    PyModule_AddIntConstant(module, "MEM_ADDR_PROGRM_START", PY8_MEM_ADDR_PROG_START);
-    PyModule_AddIntConstant(module, "MEM_ADDR_FONTSET_START", PY8_MEM_ADDR_FONTSET_START);
-    PyModule_AddIntConstant(module, "IMPL_MODE_SHIFTS_USE_VY", PY8_IMPLM_MODE_SHIFTS_USE_VY);
-    PyModule_AddIntConstant(module, "IMPL_MODE_BNNN_USE_VX", PY8_IMPLM_MODE_BNNN_USE_VX);
-    PyModule_AddIntConstant(module, "IMPL_MODE_FX_CHANGE_I", PY8_IMPLM_MODE_FX_CHANGE_I);
+                            (long) SNEK8_EXECOUT_EMPTY_STRUCT);
+    PyModule_AddIntConstant(module, "SIZE_KEYSET", SNEK8_SIZE_KEYSET);
+    PyModule_AddIntConstant(module, "SIZE_STACK", SNEK8_SIZE_STACK);
+    PyModule_AddIntConstant(module, "SIZE_REGISTERS", SNEK8_SIZE_REGISTERS);
+    PyModule_AddIntConstant(module, "SIZE_RAM", SNEK8_SIZE_RAM);
+    PyModule_AddIntConstant(module, "SIZE_MAX_ROM_FILE", SNEK8_SIZE_MAX_ROM_FILE);
+    PyModule_AddIntConstant(module, "SIZE_GRAPHICS_WIDTH", SNEK8_GRAPHICS_WIDTH);
+    PyModule_AddIntConstant(module, "SIZE_GRAPHICS_HEIGHT", SNEK8_GRAPHICS_HEIGTH);
+    PyModule_AddIntConstant(module, "SIZE_GRAPHICS", SNEK8_SIZE_GRAPHICS);
+    PyModule_AddIntConstant(module, "SIZE_FONTSET_PIXELS", SNEK8_SIZE_FONTSET_PIXELS);
+    PyModule_AddIntConstant(module, "SIZE_FONTSET_SPRITE", SNEK8_SIZE_FONTSET_PIXEL_PER_SPRITE);
+    PyModule_AddIntConstant(module, "MEM_ADDR_PROGRM_START", SNEK8_MEM_ADDR_PROG_START);
+    PyModule_AddIntConstant(module, "MEM_ADDR_FONTSET_START", SNEK8_MEM_ADDR_FONTSET_START);
+    PyModule_AddIntConstant(module, "IMPL_MODE_SHIFTS_USE_VY", SNEK8_IMPLM_MODE_SHIFTS_USE_VY);
+    PyModule_AddIntConstant(module, "IMPL_MODE_BNNN_USE_VX", SNEK8_IMPLM_MODE_BNNN_USE_VX);
+    PyModule_AddIntConstant(module, "IMPL_MODE_FX_CHANGE_I", SNEK8_IMPLM_MODE_FX_CHANGE_I);
     return module;
 }
 
 #ifdef __cplusplus
     }
 #endif
-#endif // PY8_CORE_H
+#endif // SNEK8_CORE_H

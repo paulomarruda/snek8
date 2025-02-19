@@ -1,16 +1,16 @@
 import os
 import sys
-import py8core
+from snek8 import core as snek8core
+from snek8.snek8_main_window import Snek8MainWindow
+from snek8.snek8_screen import Snek8Screen
 from typing import List, Dict, Callable
 from PyQt6.QtWidgets import QApplication, QFileDialog
 from PyQt6.QtGui import QIcon, QGuiApplication
 from PyQt6.QtCore import Qt, QBasicTimer, QTimer
-from py8_main_window import Py8MainWindow
-from py8_screen import Py8Screen
 
-PARENT_DIR: str = 'py8'
+PARENT_DIR: str = 'snek8'
 
-class Py8App(QApplication):
+class Snek8App(QApplication):
     """
     Py8 Emulator.
 
@@ -21,12 +21,12 @@ class Py8App(QApplication):
     ----------
     """
     rom_filepath: str = NotImplemented
-    py8_emulator: py8core.Py8Emulator = NotImplemented
-    py8_main_win: Py8MainWindow = NotImplemented
-    py8_screen: Py8Screen = NotImplemented
-    py8_impl_bnnn_uses_vx: bool = NotImplemented
-    py8_impl_fx_changes_ir: bool = NotImplemented
-    py8_impl_shifts_use_vy: bool = NotImplemented
+    snek8_emulator: snek8core.Snek8Emulator = NotImplemented
+    snek8_main_win: Snek8MainWindow = NotImplemented
+    snek8_screen: Snek8Screen = NotImplemented
+    snek8_impl_bnnn_uses_vx: bool = NotImplemented
+    snek8_impl_fx_changes_ir: bool = NotImplemented
+    snek8_impl_shifts_use_vy: bool = NotImplemented
     is_paused: bool = NotImplemented
     timer: QTimer = NotImplemented
     fps: int = NotImplemented
@@ -63,7 +63,6 @@ class Py8App(QApplication):
                 lambda: self.py8_emulator.setKeyValue(0xC, True),
                 lambda: self.py8_emulator.setKeyValue(0xC, False),
             ],
-
 
             Qt.Key.Key_Q: [
                 lambda: self.py8_emulator.setKeyValue(0x4, True),
@@ -141,7 +140,7 @@ class Py8App(QApplication):
         self.timer.start(500)
 
     def initUI(self) -> None:
-        self.py8_main_win = Py8MainWindow("Py8 Chip8 Emulator",
+        self.py8_main_win = Snek8MainWindow("Py8 Chip8 Emulator",
                                       self.WIDTH,
                                       self.HEIGHT
         )
@@ -160,7 +159,7 @@ class Py8App(QApplication):
         self.timer = QTimer()
         self.is_paused = False
         self.fps = 60
-        self.py8_emulator = py8core.Py8Emulator(implm_flags = 0)
+        self.py8_emulator = snek8core.Snek8Emulator(implm_flags = 0)
 
     def initMenus(self) -> None:
         # File menu

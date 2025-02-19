@@ -1,8 +1,8 @@
 import sys
-from py8_app import Py8App
+from snek8_app import Snek8App
 
 def main() -> None:
-    app = Py8App(sys.argv)
+    app = Snek8App(sys.argv)
     sys.exit(app.exec())
 
 if __name__ == '__main__':

@@ -53,8 +53,8 @@
 *
 *
 */
-#ifndef PY8_CPU_H
-    #define PY8_CPU_H
+#ifndef SNEK8_CPU_H
+    #define SNEK8_CPU_H
 #ifdef __cplusplus
     extern "C"{
 #endif
@@ -66,25 +66,26 @@
 #include <stdio.h>
 
 /**
-* @def PY8_SIZE_KEYSET
+* @def SNEK8_SIZE_KEYSET
 * @brief The number of keys that CHIP8's keypad has.
 */
-#define PY8_SIZE_KEYSET                16
+#define SNEK8_SIZE_KEYSET                16
 
 /**
-* @def PY8_SIZE_STACK
+* @def SNEK8_SIZE_STACK
 * @brief The size of CHIP8's stack.
 */
-#define PY8_SIZE_STACK                 16
+#define SNEK8_SIZE_STACK                 16
 
 /**
-* @def PY8_SIZE_REGISTERS
+* @def SNEK8_SIZE_REGISTERS
 * @brief The number of registers that CHIP8 has.
 */
 
-#define PY8_SIZE_REGISTERS             16
+#define SNEK8_SIZE_REGISTERS             16
+
 /**
-* @def PY8_SIZE_RAM
+* @def SNEK8_SIZE_RAM
 * @brief The size of CHIP8's RAM.
 * @note In old interpreters, the sector 0x000 - 0x1FF were reserved for the
 * interpreter itself; the sector reserved for the programs were 0x200 - 0xFFF.
@@ -113,79 +114,79 @@
 *               +---------------+= 0x000 (0) Start of Chip-8 RAM
 *
 */
-#define PY8_SIZE_RAM                   4096
+#define SNEK8_SIZE_RAM                   4096
 
 /**
-* @def PY8_SIZE_MAX_ROM_FILE
+* @def SNEK8_SIZE_MAX_ROM_FILE
 * @brief The maximum amount of memory CHIP8's RAM can dedicate for a program.
 */
-#define PY8_SIZE_MAX_ROM_FILE          3584
+#define SNEK8_SIZE_MAX_ROM_FILE          3584
 
 /**
-* @def PY8_SIZE_FONTSET_PIXELS
+* @def SNEK8_SIZE_FONTSET_PIXELS
 * @brief The total number of pixels that the fontset has.
 */
-#define PY8_SIZE_FONTSET_PIXELS        80
+#define SNEK8_SIZE_FONTSET_PIXELS        80
 
 /**
-* @def PY8_SIZE_FONTSET_PIXEL_PER_SPRITE
+* @def SNEK8_SIZE_FONTSET_PIXEL_PER_SPRITE
 * @brief The total number of pixels that each fonteset character has.
 */
-#define PY8_SIZE_FONTSET_PIXEL_PER_SPRITE        5
+#define SNEK8_SIZE_FONTSET_PIXEL_PER_SPRITE        5
 
 /**
-* @def PY8_SIZE_GRAPHICS
+* @def SNEK8_SIZE_GRAPHICS
 * @brief The total number of pixels in the original CHIP8's screen.
 */
-#define PY8_SIZE_GRAPHICS              2048
+#define SNEK8_SIZE_GRAPHICS              2048
 
 
 /**
-* @def PY8_GRAPHICS_WIDTH
+* @def SNEK8_GRAPHICS_WIDTH
 * @brief The width of CHIP8's original screen.
 * @note Our graphical implementation will use a multiple of this value as width (e.g.)
 *       640
 */
-#define PY8_GRAPHICS_WIDTH             64
+#define SNEK8_GRAPHICS_WIDTH             64
 
 /**
-* @def PY8_GRAPHICS_HEIGHT
+* @def SNEK8_GRAPHICS_HEIGHT
 * @brief The height of CHIP8's original screen.
 * @note Our graphical implementation will use a multiple of this value as height (e.g.)
 *       320
 */
-#define PY8_GRAPHICS_HEIGTH            32
+#define SNEK8_GRAPHICS_HEIGTH            32
 
 /**
-* @def PY8_MEM_ADDR_PROG_START
+* @def SNEK8_MEM_ADDR_PROG_START
 * @brief The memory address where the sector dedicated to store the program starts.
 */
-#define PY8_MEM_ADDR_PROG_START        0x0200
+#define SNEK8_MEM_ADDR_PROG_START        0x0200
 
 /**
-* @def PY8_MEM_ADDR_FONTSET_START
+* @def SNEK8_MEM_ADDR_FONTSET_START
 * @brief The memory address where CHIP8's fontset starts.
 */
-#define PY8_MEM_ADDR_FONTSET_START     0x50
+#define SNEK8_MEM_ADDR_FONTSET_START     0x50
 
 /**
-* @def PY8_IMPLM_MODE_SHIFTS_USE_VY
+* @def SNEK8_IMPLM_MODE_SHIFTS_USE_VY
 * @brief A flag that will tell the interpreter to use V{0xY} in the bitwise shifts.
 */
-#define PY8_IMPLM_MODE_SHIFTS_USE_VY   (1 << 0)
+#define SNEK8_IMPLM_MODE_SHIFTS_USE_VY   1
 
 /**
-* @def PY8_IMPLM_MODE_BNNN_USE_VX
+* @def SNEK8_IMPLM_MODE_BNNN_USE_VX
 * @brief A flag that will tell the interpreter to use V{0xX} in 0xB--- instructions.
 */
-#define PY8_IMPLM_MODE_BNNN_USE_VX     (1 << 1)
+#define SNEK8_IMPLM_MODE_BNNN_USE_VX     2
 
 /**
-* @def PY8_IMPLM_MODE_FX_CHANGE_I
+* @def SNEK8_IMPLM_MODE_FX_CHANGE_I
 * @brief A flag that will tell the interpreter to increment I in the 0xFX55 and 0xFX65
 *        instructions.
 */
-#define PY8_IMPLM_MODE_FX_CHANGE_I     (1 << 2)
+#define SNEK8_IMPLM_MODE_FX_CHANGE_I     4
 
 /**
 * @def UNUSED(x)
@@ -205,19 +206,19 @@
 /**
 * @brief Controls whether the emulation step was successeful.
 */
-enum Py8ExecutionOutput{
-    PY8_EXECOUT_SUCCESS,
-    PY8_EXECOUT_INVALID_OPCODE,
-    PY8_EXECOUT_STACK_EMPTY,
-    PY8_EXECOUT_STACK_OVERFLOW,
-    PY8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS,
-    PY8_EXECOUT_ROM_FILE_INVALID,
-    PY8_EXECOUT_ROM_FILE_NOT_FOUND,
-    PY8_EXECOUT_ROM_FILE_FAILED_TO_OPEN,
-    PY8_EXECOUT_ROM_FILE_FAILED_TO_READ,
-    PY8_EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM,
-    PY8_EXECOUT_EMPTY_STRUCT,
-    PY8_EXECOUT_INDEX_OUT_RANGE,
+enum Snek8ExecutionOutput{
+    SNEK8_EXECOUT_SUCCESS,
+    SNEK8_EXECOUT_INVALID_OPCODE,
+    SNEK8_EXECOUT_STACK_EMPTY,
+    SNEK8_EXECOUT_STACK_OVERFLOW,
+    SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS,
+    SNEK8_EXECOUT_ROM_FILE_INVALID,
+    SNEK8_EXECOUT_ROM_FILE_NOT_FOUND,
+    SNEK8_EXECOUT_ROM_FILE_FAILED_TO_OPEN,
+    SNEK8_EXECOUT_ROM_FILE_FAILED_TO_READ,
+    SNEK8_EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM,
+    SNEK8_EXECOUT_EMPTY_STRUCT,
+    SNEK8_EXECOUT_INDEX_OUT_RANGE,
 };
 
 /**
@@ -238,7 +239,7 @@ typedef struct{
     uint8_t iq1: 4;
     uint8_t iq2: 4;
     uint8_t msq: 4;
-} Py8Opcode;
+} Snek8Opcode;
 
 /**
 * @brief Create a new opcode based on a integer value.
@@ -246,8 +247,8 @@ typedef struct{
 * @param[in] `code`.
 * @return A new opcode representation of the integer `code`.
 */
-Py8Opcode
-py8_opcodeInit(uint16_t code);
+Snek8Opcode
+snek8_opcodeInit(uint16_t code);
 
 /**
 * @brief Retrieves the rightmost first 12 bits from the `opcode`, widely used throught
@@ -262,7 +263,7 @@ py8_opcodeInit(uint16_t code);
           `opcode`.
 */
 uint16_t
-py8_opcodeGetAddr(Py8Opcode opcode);
+snek8_opcodeGetAddr(Snek8Opcode opcode);
 
 /**
 * @brief Retrieves the rightmost byte from the `opcode`.
@@ -276,7 +277,7 @@ py8_opcodeGetAddr(Py8Opcode opcode);
 *         `opcode`.
 */
 uint8_t
-py8_opcodeGetByte(Py8Opcode code);
+snek8_opcodeGetByte(Snek8Opcode code);
 
 /**
 * @brief Implementation of the Chip8's CPU.
@@ -295,10 +296,10 @@ py8_opcodeGetByte(Py8Opcode code);
 * @param `implm_flags`. Controls which implementation to follow.
 */
 typedef struct{
-    uint8_t memory[PY8_SIZE_RAM];
-    uint8_t graphics[PY8_SIZE_GRAPHICS];
-    uint8_t registers[PY8_SIZE_REGISTERS];
-    uint16_t stack[PY8_SIZE_STACK];
+    uint8_t memory[SNEK8_SIZE_RAM];
+    uint8_t graphics[SNEK8_SIZE_GRAPHICS];
+    uint8_t registers[SNEK8_SIZE_REGISTERS];
+    uint16_t stack[SNEK8_SIZE_STACK];
     uint16_t keys;
     uint16_t pc;
     uint16_t ir;
@@ -306,17 +307,17 @@ typedef struct{
     uint8_t sp;
     uint8_t st;
     uint8_t dt;
-} Py8CPU;
+} Snek8CPU;
 
 /**
 * @brief Set the CPU's field members to their initial values.
 *
 * @param[in, out] `cpu`.
 * @param[in] `mode` Determines which CHIP8 implementation to use.
-* @return PY8_EXECOUT_SUCCESS.
+* @return SNEK8_EXECOUT_SUCCESS.
 */
-enum Py8ExecutionOutput
-py8_cpuInit(Py8CPU* cpu, uint8_t implm_flags);
+enum Snek8ExecutionOutput
+snek8_cpuInit(Snek8CPU* cpu, uint8_t implm_flags);
 
 /**
 * @brief Loads a given program into CHIP8's memory.
@@ -325,14 +326,14 @@ py8_cpuInit(Py8CPU* cpu, uint8_t implm_flags);
 * @param[in] `rom_file_path`.
 * @return A code representation on whether the execution was sucesseful.
 * @note The following error codes can be returned by this function:
-* - `PY8_EXECOUT_EMPTY_STRUCT`.
-* - `PY8_EXECOUT_ROM_FILE_INVALID`.
-* - `PY8_EXECOUT_ROM_FILE_FAILED_TO_OPEN`.
-* - `PY8_EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM`.
-* - `PY8_EXECOUT_ROM_FILE_FAILED_TO_READ`.
+* - `SNEK8_EXECOUT_EMPTY_STRUCT`.
+* - `SNEK8_EXECOUT_ROM_FILE_INVALID`.
+* - `SNEK8_EXECOUT_ROM_FILE_FAILED_TO_OPEN`.
+* - `SNEK8_EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM`.
+* - `SNEK8_EXECOUT_ROM_FILE_FAILED_TO_READ`.
 */
-enum Py8ExecutionOutput
-py8_cpuLoadRom(Py8CPU* cpu, const char* rom_file_path);
+enum Snek8ExecutionOutput
+snek8_cpuLoadRom(Snek8CPU* cpu, const char* rom_file_path);
 
 /**
 * @brief Toggle on/off a particular key.
@@ -342,10 +343,10 @@ py8_cpuLoadRom(Py8CPU* cpu, const char* rom_file_path);
 * @param[in] `value`.
 * @return A code representation on whether the execution was sucesseful.
 * @note The following error codes can be returned by this function:
-* - `PY8_EXECOUT_EMPTY_STRUCT`.
+* - `SNEK8_EXECOUT_EMPTY_STRUCT`.
 */
-enum Py8ExecutionOutput
-py8_cpuSetKey(Py8CPU* cpu, size_t key, bool value);
+enum Snek8ExecutionOutput
+snek8_cpuSetKey(Snek8CPU* cpu, size_t key, bool value);
 
 /**
 * @brief Retrieves the current value of the given key.
@@ -355,14 +356,14 @@ py8_cpuSetKey(Py8CPU* cpu, size_t key, bool value);
 * @return The value of the key.
 */
 static inline bool
-py8_cpuGetKeyVal(Py8CPU cpu, size_t key){
+snek8_cpuGetKeyVal(Snek8CPU cpu, size_t key){
     return (cpu.keys & (1 << key)) == 0? false: true;
 }
 
 /*
 * @brief Function pointer representation the action of a given instruction.
 */
-typedef enum Py8ExecutionOutput (*Py8InstructionExec)(Py8CPU* cpu, Py8Opcode opcode, char* code);
+typedef enum Snek8ExecutionOutput (*Snek8InstructionExec)(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /*
 * @brief Representation of a Chip8's instruction.
@@ -372,8 +373,8 @@ typedef enum Py8ExecutionOutput (*Py8InstructionExec)(Py8CPU* cpu, Py8Opcode opc
 */
 typedef struct{
     char code[30];
-    Py8InstructionExec exec;
-} Py8Instruction;
+    Snek8InstructionExec exec;
+} Snek8Instruction;
 
 /**
 * @brief Retrieves the especified instruction from an opcode.
@@ -381,8 +382,8 @@ typedef struct{
 * @param[in] `opcode`.
 * @return The instruction determined by the `opcode`.
 */
-Py8Instruction
-py8_opcodeDecode(Py8Opcode opcode);
+Snek8Instruction
+snek8_opcodeDecode(Snek8Opcode opcode);
 
 /**
 * @brief Execute a step in the emulation process.
@@ -395,8 +396,8 @@ py8_opcodeDecode(Py8Opcode opcode);
 * @return A code representation on whether the execution was sucesseful indicating,
 * if not, the problem ocurred.
 */
-enum Py8ExecutionOutput
-py8_cpuStep(Py8CPU* cpu, Py8Instruction* instruction);
+enum Snek8ExecutionOutput
+snek8_cpuStep(Snek8CPU* cpu, Snek8Instruction* instruction);
 
 /**
 * @brief The instruction representation of any instruction given by an invalid opcode.
@@ -406,10 +407,10 @@ py8_cpuStep(Py8CPU* cpu, Py8Instruction* instruction);
 * @param `cpu`
 * @param `opcode`
 * @param `code`
-* @return Always returns the error code `PY8_EXECOUT_INVALID_OPCODE`.
+* @return Always returns the error code `SNEK8_EXECOUT_INVALID_OPCODE`.
 */
-enum Py8ExecutionOutput
-py8_cpuExecutionError(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuExecutionError(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Clear the Chip8's screen.
@@ -421,11 +422,11 @@ py8_cpuExecutionError(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuCLS(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuCLS(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Return from a subroutine.
@@ -440,11 +441,11 @@ py8_cpuCLS(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty, or `PY8_EXECOUT_EMPTY_STACK` if the stack is empty.
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+*       empty, or `SNEK8_EXECOUT_EMPTY_STACK` if the stack is empty.
 */
-enum Py8ExecutionOutput
-py8_cpuRET(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuRET(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Call a subroutine.
@@ -459,11 +460,11 @@ py8_cpuRET(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty, or `PY8_EXECOUT_STACK_OVERFLOW` if the stack is full.
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+*       empty, or `SNEK8_EXECOUT_STACK_OVERFLOW` if the stack is full.
 */
-enum Py8ExecutionOutput
-py8_cpuCALL(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuCALL(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Jump to the given address.
@@ -477,11 +478,11 @@ py8_cpuCALL(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuJMP_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuJMP_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Compares a register's value to a given byte for equality.
@@ -496,11 +497,11 @@ py8_cpuJMP_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSE_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Compares a register's value to a given byte for inequality.
@@ -515,11 +516,11 @@ py8_cpuSE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSNE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSNE_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Set the value of the register VX to the given byte.
@@ -531,11 +532,11 @@ py8_cpuSNE_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Add the given byte to the value held in the given register.
@@ -549,11 +550,11 @@ py8_cpuLD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuADD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuADD_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Compares the values held in the two given registers for equality.
@@ -568,11 +569,11 @@ py8_cpuADD_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSE_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Compares the values held in the two given registers for inequality.
@@ -587,11 +588,11 @@ py8_cpuSE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSNE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSNE_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xY} to the value held at the register V{0xX}.
@@ -603,11 +604,11 @@ py8_cpuSNE_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} OR V{0xY}.
@@ -619,11 +620,11 @@ py8_cpuLD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuOR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} AND V{0xY}.
@@ -635,11 +636,11 @@ py8_cpuOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuAND_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuAND_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} XOR V{0xY}.
@@ -651,11 +652,11 @@ py8_cpuAND_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuXOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuXOR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} + V{0xY}, V{0xF} := carry.
@@ -667,11 +668,11 @@ py8_cpuXOR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuADD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuADD_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} - V{0xY}, V{0xF} := NOT borrow.
@@ -683,11 +684,11 @@ py8_cpuADD_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSUB_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSUB_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xY} - V{0xX}, V{0xF} := NOT borrow.
@@ -699,11 +700,11 @@ py8_cpuSUB_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSUBN_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -711,7 +712,7 @@ py8_cpuSUBN_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 *  - Modern: Sets the value of register V{0xX} to V{0xX} >> 1, VF := undeflow.
 *    V{0xY} is therefore ignored.
 *
-* @see PY8_IMPLM_MODE_SHIFTS_USE_VY
+* @see SNEK8_IMPLM_MODE_SHIFTS_USE_VY
 *
 * Opcode: 0x8XY6.
 * Code: SHR V{0xX}, V{0xY}.
@@ -720,11 +721,11 @@ py8_cpuSUBN_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSHR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSHR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -739,11 +740,11 @@ py8_cpuSHR_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSHL_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSHL_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Sets the value of the index register to the given address.
@@ -755,11 +756,11 @@ py8_cpuSHL_VX_VY(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_I_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_I_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -769,17 +770,17 @@ py8_cpuLD_I_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * Opcode: 0xBNNN or 0xBXNN.
 * Code: JP V0x0, 0x0NNN or JP V{0xX}, 0x0NNN.
 *
-* @see PY8_IMPLM_MODE_BNNN_USES_VX.
+* @see SNEK8_IMPLM_MODE_BNNN_USES_VX.
 *
 * @param `cpu`
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuJP_V0_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Generate a random 8-bit integer and performs a bitwise and operation with the
@@ -792,11 +793,11 @@ py8_cpuJP_V0_ADDR(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuRND_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Draw a sprite of size N at screen position V{0xX}, V{0xY}.
@@ -808,7 +809,7 @@ py8_cpuRND_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 *
 * @note The Chip8's oroginal screen has 32x64 pixels. In our implementation, we represent
@@ -838,8 +839,8 @@ py8_cpuRND_VX_BYTE(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * The sprite starts at memory address 0x0E01 and ranges for 5 bytes.
 *
 */
-enum Py8ExecutionOutput
-py8_cpuDRW_VX_VY_N(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Skip the next instruction if the key V{0xX} is pressed.
@@ -851,11 +852,11 @@ py8_cpuDRW_VX_VY_N(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSKP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSKP_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Skip the next instruction if the key V{0xX} is not pressed.
@@ -867,11 +868,11 @@ py8_cpuSKP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuSKNP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuSKNP_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Set V{0xX} to the value held at the delay time register.
@@ -883,11 +884,11 @@ py8_cpuSKNP_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_VX_DT(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_VX_DT(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Listen for a key press and store its index in the register V{0xX}.
@@ -899,11 +900,11 @@ py8_cpuLD_VX_DT(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_VX_K(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_VX_K(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Set the delay timer register to V{0xX}.
@@ -915,11 +916,11 @@ py8_cpuLD_VX_K(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_DT_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_DT_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Set the sound timer register to V{0xX}.
@@ -931,11 +932,11 @@ py8_cpuLD_DT_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_ST_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_ST_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief Set I := I + V{0xX}.
@@ -947,11 +948,11 @@ py8_cpuLD_ST_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuADD_I_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuADD_I_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief The value of I is set to the location for the sprite representing the character
@@ -964,11 +965,11 @@ py8_cpuADD_I_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_F_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_F_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief  Store BCD representation of V{0xX} in memory locations I, I+1, and I+2.
@@ -980,7 +981,7 @@ py8_cpuLD_F_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 *
 * @note The Binary Coded Representation of a number (assumed written in the
@@ -997,8 +998,8 @@ py8_cpuLD_F_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
 *                2 |  0  0  1  0
 *
 */
-enum Py8ExecutionOutput
-py8_cpuLD_B_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_B_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -1010,17 +1011,17 @@ py8_cpuLD_B_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * Opcode: 0xFX55.
 * Code: LD [I], V{0xX}.
 *
-* @see PY8_IMPLM_MODE_FX_CHANGES_I.
+* @see SNEK8_IMPLM_MODE_FX_CHANGES_I.
 *
 * @param `cpu`
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_I_V0_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -1032,19 +1033,19 @@ py8_cpuLD_I_V0_VX(Py8CPU* cpu, Py8Opcode opcode, char* code);
 * Opcode: 0xFX65.
 * Code: LD V0xX, [I].
 *
-* @see PY8_IMPLM_MODE_FX_CHANGES_I.
+* @see SNEK8_IMPLM_MODE_FX_CHANGES_I.
 *
 * @param `cpu`
 * @param `opcode`
 * @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `PY8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
+* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
 *       empty.
 */
-enum Py8ExecutionOutput
-py8_cpuLD_VX_V0_I(Py8CPU* cpu, Py8Opcode opcode, char* code);
+enum Snek8ExecutionOutput
+snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 
 #ifdef __cplusplus
     }
 #endif
-#endif // PY8_CPU_H
+#endif // SNEK8_CPU_H

@@ -351,7 +351,7 @@ snek8_emulatorGetStack(PyObject* self, PyObject* args){
         return NULL;
     }
     for (size_t i = 0; i < SNEK8_SIZE_STACK; i++){
-        PyObject* value = Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.stack[i]);
+        PyObject* value = Py_BuildValue("i", CAST_PTR(Snek8Emulator, self)->ob_cpu.stack.buffer[i]);
         if (!value){
             PyErr_SetString(PyExc_MemoryError, "Failed to create register list element.");
             Py_DECREF(stack_list);

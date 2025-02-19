@@ -55,7 +55,7 @@ class Snek8Screen(QFrame):
 
         This function does not change the emulator screen.
         """
-        self.snek8_screen = [False for pix in range(SIZE_GRAPHICS)]
+        self.snek8_screen = [False for _ in range(SIZE_GRAPHICS)]
         self.update()
 
     def updateScreen(self, screen: Annotated[List[int], SIZE_GRAPHICS]) -> None:
@@ -69,6 +69,7 @@ class Snek8Screen(QFrame):
         """
         Draw the screen.
         """
+        _ = a0
         painter = QPainter(self)
         painter.eraseRect(0, 0, SIZE_GRAPHICS_WIDTH, SIZE_GRAPHICS_HEIGHT)
         for y in range(SIZE_GRAPHICS_HEIGHT):

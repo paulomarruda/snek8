@@ -4,7 +4,7 @@
 @license: GPL-3
 @brief: Implementation of the emulator' main window.
 """
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 from PyQt6.QtWidgets import QMenu, QMenuBar, QMainWindow, QLabel
 from PyQt6.QtGui import QAction, QKeyEvent
 from PyQt6.QtCore import Qt
@@ -46,7 +46,7 @@ class Snek8MainWindow(QMainWindow):
     status_bar: QLabel
     win_menus: Dict[str, QMenu] = NotImplemented
     checkable_actions: Dict[str, QAction] = NotImplemented
-    cpu_key_map: Dict[int, Callable] = NotImplemented
+    cpu_key_map: Dict[int, List[Callable]] = NotImplemented
     app_key_map: Dict[int, Callable] = NotImplemented
 
     def __init__(self, title: str, width: int, height: int) -> None:
@@ -117,7 +117,7 @@ class Snek8MainWindow(QMainWindow):
             menu_item.triggered.connect(event_fun)
             self.win_menus[menu_name].addAction(menu_item)
 
-    def setKeys(self, cpu_key_map: Dict[int, Callable], app_key_map: Dict[int, Callable]) -> None:
+    def setKeys(self, cpu_key_map: Dict[int, List[Callable]], app_key_map: Dict[int, Callable]) -> None:
         """
         Load the key bindings.
         """

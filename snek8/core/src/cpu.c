@@ -18,6 +18,7 @@
 
 #define SIZE_U8 sizeof(uint8_t)
 #define SIZE_U16 sizeof(uint16_t)
+#define SIZE_U64 sizeof(uint64_t)
 
 /**
 * @brief Converts a single hexadecimal-digit to its hexadecimal char representation.
@@ -131,6 +132,44 @@ snek8_opcodeGetAddr(Snek8Opcode opcode){
 }
 
 enum Snek8ExecutionOutput
+snek8_stackInit(Snek8Stack *stack){
+    if (!stack){
+        return SNEK8_EXECOUT_EMPTY_STRUCT;
+    }
+    stack->sp = 0;
+    memset(stack->buffer, 0, SNEK8_SIZE_STACK * SIZE_U16);
+    return SNEK8_EXECOUT_SUCCESS;
+}
+
+enum Snek8ExecutionOutput
+snek8_stackPush(Snek8Stack *stack, uint16_t* pc, Snek8Opcode opcode, char* code){
+    if (!stack || !pc){
+        return SNEK8_EXECOUT_EMPTY_STRUCT;
+    }
+    if (SNEK8_SIZE_STACK == stack->sp){
+        return SNEK8_EXECOUT_STACK_OVERFLOW;
+    }
+    stack->buffer[stack->sp] = *pc;
+    stack->sp++;
+    *pc = snek8_opcodeGetAddr(opcode);
+    _snek8_writeU16(code + 5, *pc);
+    return SNEK8_EXECOUT_SUCCESS;
+}
+
+enum Snek8ExecutionOutput
+snek8_stackPop(Snek8Stack *stack, uint16_t* pc){
+    if (!stack){
+        return SNEK8_EXECOUT_EMPTY_STRUCT;
+    }
+    if (0 == stack->sp){
+        return SNEK8_EXECOUT_STACK_EMPTY;
+    }
+    stack->sp--;
+    *pc = stack->buffer[stack->sp];
+    return SNEK8_EXECOUT_SUCCESS;
+}
+
+enum Snek8ExecutionOutput
 snek8_cpuInit(Snek8CPU* cpu, uint8_t implm_flags){
     if (!cpu){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
@@ -160,11 +199,11 @@ snek8_cpuInit(Snek8CPU* cpu, uint8_t implm_flags){
     cpu->sp = 0;
     cpu->dt = 0;
     cpu->sp = 0;
-    memset(&cpu->memory, 0, SNEK8_SIZE_RAM * SIZE_U8);
-    memcpy(cpu->memory + SNEK8_MEM_ADDR_FONTSET_START, fontset, SNEK8_SIZE_FONTSET_PIXELS * SIZE_U8);
-    memset(&cpu->graphics, 0, SNEK8_SIZE_GRAPHICS * SIZE_U8);
+    (void) snek8_stackInit(&cpu->stack);
     memset(&cpu->registers, 0, SNEK8_SIZE_REGISTERS * SIZE_U8);
-    memset(&cpu->stack, 0, SNEK8_SIZE_STACK * SIZE_U16);
+    memset(&cpu->memory, 0, SNEK8_SIZE_RAM * SIZE_U8);
+    memset(&cpu->graphics, 0, SNEK8_SIZE_GRAPHICS * SIZE_U8);
+    memcpy(cpu->memory + SNEK8_MEM_ADDR_FONTSET_START, fontset, SNEK8_SIZE_FONTSET_PIXELS * SIZE_U8);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
@@ -290,12 +329,7 @@ snek8_cpuRET(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
     if (!cpu){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    if (cpu->sp == 0){
-        return SNEK8_EXECOUT_STACK_EMPTY;
-    }
-    cpu->sp--;
-    cpu->pc = cpu->stack[cpu->sp];
-    return SNEK8_EXECOUT_SUCCESS;
+    return snek8_stackPop(&cpu->stack, &cpu->pc);
 }
 
 /*
@@ -310,11 +344,7 @@ snek8_cpuCALL(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
     if (cpu->sp == 16){
         return SNEK8_EXECOUT_STACK_OVERFLOW;
     }
-    cpu->stack[cpu->sp] = cpu->pc;
-    cpu->sp++;
-    cpu->pc = snek8_opcodeGetAddr(opcode);
-    _snek8_writeU16(code + 5, cpu->pc);
-    return SNEK8_EXECOUT_SUCCESS;
+    return snek8_stackPush(&cpu->stack, &cpu->pc, opcode, code);
 }
 
 /*
@@ -645,6 +675,7 @@ _snek8_cpuGetPixel(Snek8CPU* cpu, size_t x, size_t y){
     size_t idx_y = y & 31;
     return &cpu->graphics[idx_y * SNEK8_GRAPHICS_WIDTH + idx_x];
 }
+
 /*
 * DRW V{0xX}, V{0xY}, 0xN.
 */

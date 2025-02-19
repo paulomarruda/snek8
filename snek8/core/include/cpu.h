@@ -280,6 +280,41 @@ uint8_t
 snek8_opcodeGetByte(Snek8Opcode code);
 
 /**
+* @brief Chip8's 16-bit stack structure.
+* @param `buffer` The array bucket containing the stack positions.
+* @param `sp` The stack pointer.
+*/
+typedef struct{
+    uint16_t buffer[SNEK8_SIZE_STACK];
+    uint8_t sp;
+} Snek8Stack;
+
+/**
+* @brief Init a stack with the default values.
+* @param[in, out] `stack`
+*/
+enum Snek8ExecutionOutput
+snek8_stackInit(Snek8Stack* stack);
+
+/**
+* @brief Init a stack with the default values.
+* @param[in, out] `stack`
+* @param[in, out] `pc` The CPU's program counter.
+* @param[in] `opcode`.
+* @param[in] `code` The string representation of the CALL instruction.
+*/
+enum Snek8ExecutionOutput
+snek8_stackPush(Snek8Stack* stack, uint16_t* pc, Snek8Opcode opcode, char* code);
+
+/**
+* @brief Init a stack with the default values.
+* @param[in, out] `stack`
+* @param[in, out] `pc` The CPU's program counter.
+*/
+enum Snek8ExecutionOutput
+snek8_stackPop(Snek8Stack* stack, uint16_t* pc);
+
+/**
 * @brief Implementation of the Chip8's CPU.
 *
 * @param `registers` Chip8's 16 8-bit registers ranging from 0x0 to 0xF.
@@ -298,8 +333,8 @@ snek8_opcodeGetByte(Snek8Opcode code);
 typedef struct{
     uint8_t memory[SNEK8_SIZE_RAM];
     uint8_t graphics[SNEK8_SIZE_GRAPHICS];
+    Snek8Stack stack;
     uint8_t registers[SNEK8_SIZE_REGISTERS];
-    uint16_t stack[SNEK8_SIZE_STACK];
     uint16_t keys;
     uint16_t pc;
     uint16_t ir;

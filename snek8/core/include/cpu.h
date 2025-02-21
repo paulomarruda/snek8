@@ -41,6 +41,21 @@
 *                the value of the memory location I+y into the register V{0xy}. The
 *                index register is left unchanged.
 *
+* Following the wikipedia page, V{0xF} should capture the overflow of the instruction
+* ADD I, V{0xX} and the index register should not be larger than 0x0FFF. For a
+* detailed discussion, see:
+*
+*            `https://github.com/Chromatophore/HP48-Superchip/issues/2`
+*
+* Since our memory implementation is an array with fixed length, we guarantee
+* that the index register is never larger than 0x0FFF. This affects the following
+* instructions:
+*
+*        - (0xDXYN) DRW V{0xX}, V{0xY}, 0xN.
+*        - (0xFX29) LD B, V{0xX}.
+*        - (0xFX55) LD [I], V{0xX}.
+*        - (0xFX65) LD V{0xX}, [I].
+*
 * @note For our the implementation, we follow the following references:
 *
 *     - Cowgod's Chip-8 Technical Reference v1.0. Accessed at
@@ -51,6 +66,9 @@
 *
 *           `https://tobiasvl.github.io/blog/write-a-chip-8-emulator/`
 *
+*     - Chip8's Wikipedia page:
+*
+*           `https://en.wikipedia.org/wiki/CHIP-8`
 *
 */
 #ifndef SNEK8_CPU_H
@@ -90,28 +108,28 @@
 * @note In old interpreters, the sector 0x000 - 0x1FF were reserved for the
 * interpreter itself; the sector reserved for the programs were 0x200 - 0xFFF.
 *
-*               +---------------+= 0xFFF (4095) End of Chip-8 RAM
-*               |               |
-*               |               |
-*               |               |
-*               |               |
-*               |               |
-*               | 0x200 to 0xFFF|
-*               |     Chip-8    |
-*               | Program / Data|
-*               |     Space     |
-*               |               |
-*               |               |
-*               |               |
-*               +- - - - - - - -+= 0x600 (1536) Start of ETI 660 Chip-8 programs
-*               |               |
-*               |               |
-*               |               |
-*               +---------------+= 0x200 (512) Start of most Chip-8 programs
-*               | 0x000 to 0x1FF|
-*               | Reserved for  |
-*               |  interpreter  |
-*               +---------------+= 0x000 (0) Start of Chip-8 RAM
+*               +----------------+= 0x0FFF (4095) End of Chip-8 RAM
+*               |                |
+*               |                |
+*               |                |
+*               |                |
+*               |                |
+*               | 0x200 to 0xFFF |
+*               |     Chip-8     |
+*               | Program / Data |
+*               |     Space      |
+*               |                |
+*               |                |
+*               |                |
+*               +----------------+= 0x600 (1536) Start of ETI 660 Chip-8 programs
+*               |                |
+*               |                |
+*               |                |
+*               +----------------+= 0x200 (512) Start of most Chip-8 programs
+*               | 0x000 to 0x1FF |
+*               | Reserved for   |
+*               |  interpreter   |
+*               +----------------+= 0x000 (0) Start of Chip-8 RAM
 *
 */
 #define SNEK8_SIZE_RAM                   4096
@@ -170,6 +188,12 @@
 #define SNEK8_MEM_ADDR_FONTSET_START     0x50
 
 /**
+* @def SNEK8_MEM_ADDR_RAM_END
+* @brief The end of Chip8's RAM.
+*/
+#define SNEK8_MEM_ADDR_RAM_END                   0x0FFF
+
+/**
 * @def SNEK8_IMPLM_MODE_SHIFTS_USE_VY
 * @brief A flag that will tell the interpreter to use V{0xY} in the bitwise shifts.
 */
@@ -221,49 +245,61 @@ enum Snek8ExecutionOutput{
     SNEK8_EXECOUT_INDEX_OUT_RANGE,
 };
 
-/**
-* @brief Declaration of Chip8's opcode structure as a bitfield.
+/*
+* Opcode emulations methods.
 *
 * Chip8's opcode consists of a hexadecimal 16-bit undigned integer that
 * we break as follows:
 *
 *                     0x X Y Z W
 *                        ^ ^ ^ ^
-*                        | | | |_____ the least significant quarter.
-*                        | | |_______ the information quarter 1.
-*                        | |_________ the information quarter 2.
-*                        |___________ the most significant quarter.
-*/
-typedef struct{
-    uint8_t lsq: 4;
-    uint8_t iq1: 4;
-    uint8_t iq2: 4;
-    uint8_t msq: 4;
-} Snek8Opcode;
-
-/**
-* @brief Create a new opcode based on a integer value.
+*                        | | | |_____ the least significant quarter (lsq).
+*                        | | |_______ the information quarter 1 (iq1).
+*                        | |_________ the information quarter 2 (iq2).
+*                        |___________ the most significant quarter (msq).
 *
-* @param[in] `code`.
-* @return A new opcode representation of the integer `code`.
+* The opcode is used as follows throught the implementation:
+* - The `msq` is used to identify groups of (often similar) instructions.
+* - The quarters `iq1` and `iq2` are used to identify all pourpuse registers.
+* - The rightmost first byte 0x00ZW of information for arithmetics/indexing.
+* - The rightmost first 12-bits is used to identify memory addresses.
+* - The quarter `lsq` is used to determine sprite sizes.
 */
-Snek8Opcode
-snek8_opcodeInit(uint16_t code);
+
 
 /**
-* @brief Retrieves the rightmost first 12 bits from the `opcode`, widely used throught
-* the implementation to point to memory adresses.
+* @brief Retrieve a nibble from the opcode.
+*
+* @param[in] `opcode`
+* @param[in] `indx`
+*
+* @note The opcode is structured as follows
+*
+*         Nibble + Index
+*         -------|------
+*           msq  |  3
+*           iq1  |  2
+*           iq2  |  1
+*           lsq  |  0
+*/
+inline uint8_t
+snek8_opcodeGetNibble(uint16_t opcode, size_t indx){
+    return (opcode >> (4 * indx)) & 0xF;
+}
+
+/**
+* @brief Retrieves the rightmost first 12 bits from the `opcode`.
 *
 *                     0x X N N N
 *                         |_____|
 *                            |_____ the address.
 *
 * @param[in] `opcode`
-* @return the 16-bit unsigned integer representation of the first 12 bits of the
-          `opcode`.
 */
-uint16_t
-snek8_opcodeGetAddr(Snek8Opcode opcode);
+inline uint16_t
+snek8_opcodeGetAddr(uint16_t opcode){
+    return opcode & 0x0FFF;
+}
 
 /**
 * @brief Retrieves the rightmost byte from the `opcode`.
@@ -273,11 +309,11 @@ snek8_opcodeGetAddr(Snek8Opcode opcode);
 *                             |____ the byte.
 *
 * @param[in] `opcode`.
-* @return A 8-bit unsigned integer represention of the rightmost byte from the
-*         `opcode`.
 */
-uint8_t
-snek8_opcodeGetByte(Snek8Opcode code);
+inline uint8_t
+snek8_opcodeGetByte(uint16_t opcode){
+    return opcode & 0xFF;
+}
 
 /**
 * @brief Chip8's 16-bit stack structure.
@@ -304,7 +340,7 @@ snek8_stackInit(Snek8Stack* stack);
 * @param[in] `code` The string representation of the CALL instruction.
 */
 enum Snek8ExecutionOutput
-snek8_stackPush(Snek8Stack* stack, uint16_t* pc, Snek8Opcode opcode, char* code);
+snek8_stackPush(Snek8Stack* stack, uint16_t* pc, uint16_t opcode, char* code);
 
 /**
 * @brief Init a stack with the default values.
@@ -325,7 +361,7 @@ snek8_stackPop(Snek8Stack* stack, uint16_t* pc);
 * @param `dt` Chip8's 8-bit delay timer register.
 * @param `stack` Chip8's 16-level 16-bit stack.
 * @param `memory` Array representation of Chip8's memory.
-* @param `keys` Chip8's 16 key set. Each bit represent a key that is either pressed#
+* @param `keys` Chip8's 16 key set. Each bit represent a key that is either pressed
 *         or released.
 * @param `graphics` Array representation of Chip8's screen.
 * @param `implm_flags`. Controls which implementation to follow.
@@ -390,15 +426,15 @@ snek8_cpuSetKey(Snek8CPU* cpu, size_t key, bool value);
 * @param[in] `key`.
 * @return The value of the key.
 */
-static inline bool
+inline bool
 snek8_cpuGetKeyVal(Snek8CPU cpu, size_t key){
-    return (cpu.keys & (1 << key)) == 0? false: true;
+    return (cpu.keys & (1 << key))? false: true;
 }
 
 /*
 * @brief Function pointer representation the action of a given instruction.
 */
-typedef enum Snek8ExecutionOutput (*Snek8InstructionExec)(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+typedef enum Snek8ExecutionOutput (*Snek8InstructionExec)(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /*
 * @brief Representation of a Chip8's instruction.
@@ -418,7 +454,7 @@ typedef struct{
 * @return The instruction determined by the `opcode`.
 */
 Snek8Instruction
-snek8_opcodeDecode(Snek8Opcode opcode);
+snek8_opcodeDecode(uint16_t opcode);
 
 /**
 * @brief Execute a step in the emulation process.
@@ -445,7 +481,7 @@ snek8_cpuStep(Snek8CPU* cpu, Snek8Instruction* instruction);
 * @return Always returns the error code `SNEK8_EXECOUT_INVALID_OPCODE`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuExecutionError(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuExecutionError(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Clear the Chip8's screen.
@@ -461,7 +497,7 @@ snek8_cpuExecutionError(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuCLS(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuCLS(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Return from a subroutine.
@@ -480,7 +516,7 @@ snek8_cpuCLS(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty, or `SNEK8_EXECOUT_EMPTY_STACK` if the stack is empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuRET(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuRET(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Call a subroutine.
@@ -499,7 +535,7 @@ snek8_cpuRET(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty, or `SNEK8_EXECOUT_STACK_OVERFLOW` if the stack is full.
 */
 enum Snek8ExecutionOutput
-snek8_cpuCALL(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuCALL(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Jump to the given address.
@@ -517,7 +553,7 @@ snek8_cpuCALL(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuJMP_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuJMP_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Compares a register's value to a given byte for equality.
@@ -536,7 +572,7 @@ snek8_cpuJMP_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSE_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Compares a register's value to a given byte for inequality.
@@ -555,7 +591,7 @@ snek8_cpuSE_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSNE_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSNE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Set the value of the register VX to the given byte.
@@ -571,7 +607,7 @@ snek8_cpuSNE_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Add the given byte to the value held in the given register.
@@ -589,7 +625,7 @@ snek8_cpuLD_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuADD_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuADD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Compares the values held in the two given registers for equality.
@@ -608,7 +644,7 @@ snek8_cpuADD_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSE_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSE_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Compares the values held in the two given registers for inequality.
@@ -627,7 +663,7 @@ snek8_cpuSE_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSNE_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSNE_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xY} to the value held at the register V{0xX}.
@@ -643,7 +679,7 @@ snek8_cpuSNE_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} OR V{0xY}.
@@ -659,7 +695,7 @@ snek8_cpuLD_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuOR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuOR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} AND V{0xY}.
@@ -675,7 +711,7 @@ snek8_cpuOR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuAND_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuAND_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} XOR V{0xY}.
@@ -691,7 +727,7 @@ snek8_cpuAND_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuXOR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuXOR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} + V{0xY}, V{0xF} := carry.
@@ -707,7 +743,7 @@ snek8_cpuXOR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuADD_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuADD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} - V{0xY}, V{0xF} := NOT borrow.
@@ -723,7 +759,7 @@ snek8_cpuADD_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSUB_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSUB_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xY} - V{0xX}, V{0xF} := NOT borrow.
@@ -739,7 +775,7 @@ snek8_cpuSUB_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -760,7 +796,7 @@ snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSHR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSHR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -779,7 +815,7 @@ snek8_cpuSHR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSHL_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSHL_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Sets the value of the index register to the given address.
@@ -795,7 +831,7 @@ snek8_cpuSHL_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_I_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_I_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -815,7 +851,7 @@ snek8_cpuLD_I_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Generate a random 8-bit integer and performs a bitwise and operation with the
@@ -832,7 +868,7 @@ snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Draw a sprite of size N at screen position V{0xX}, V{0xY}.
@@ -875,7 +911,7 @@ snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *
 */
 enum Snek8ExecutionOutput
-snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Skip the next instruction if the key V{0xX} is pressed.
@@ -891,7 +927,7 @@ snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSKP_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSKP_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Skip the next instruction if the key V{0xX} is not pressed.
@@ -907,7 +943,7 @@ snek8_cpuSKP_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSKNP_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuSKNP_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Set V{0xX} to the value held at the delay time register.
@@ -923,7 +959,7 @@ snek8_cpuSKNP_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_DT(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_VX_DT(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Listen for a key press and store its index in the register V{0xX}.
@@ -939,7 +975,7 @@ snek8_cpuLD_VX_DT(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_K(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_VX_K(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Set the delay timer register to V{0xX}.
@@ -955,7 +991,7 @@ snek8_cpuLD_VX_K(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_DT_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_DT_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Set the sound timer register to V{0xX}.
@@ -971,7 +1007,7 @@ snek8_cpuLD_DT_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_ST_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_ST_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief Set I := I + V{0xX}.
@@ -987,7 +1023,7 @@ snek8_cpuLD_ST_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuADD_I_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuADD_I_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief The value of I is set to the location for the sprite representing the character
@@ -1004,7 +1040,7 @@ snek8_cpuADD_I_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_F_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_F_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief  Store BCD representation of V{0xX} in memory locations I, I+1, and I+2.
@@ -1034,7 +1070,7 @@ snek8_cpuLD_F_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_B_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_B_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -1056,7 +1092,7 @@ snek8_cpuLD_B_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -1078,7 +1114,7 @@ snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
 *       empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, Snek8Opcode opcode, char* code);
+snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, uint16_t opcode, char* code);
 
 #ifdef __cplusplus
     }

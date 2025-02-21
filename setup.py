@@ -61,7 +61,8 @@ setup(
     license = 'MIT',
     url = 'https://github.com/paulomarruda/py8/',
     ext_modules = [py8_module],
-    packages = find_packages(where=PARENT_DIR),
+    packages = find_packages(include=[PARENT_DIR], exclude=["snek8.core"]),
+    py_modules=['snek8.__init__'],
     python_requires = '>=3.13',
 
 )

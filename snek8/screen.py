@@ -62,7 +62,7 @@ class Snek8Screen(QFrame):
         """
         Set the array representation of the CHIP8's pixels.
         """
-        self.py8_screen = screen
+        self.snek8_screen = screen
         self.update()
 
     def paintEvent(self, a0: QPaintEvent | None) -> None:

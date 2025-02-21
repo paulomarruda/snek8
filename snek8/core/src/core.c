@@ -544,9 +544,8 @@ _snek8_emulatorExecOpc(PyObject* self, PyObject* args, PyObject* kwargs){
         PyErr_Format(PyExc_ValueError, "The opcode must be a valid 16-bit unsigned integer.");
         return NULL;
     }
-    Snek8Opcode opc = snek8_opcodeInit((uint16_t) code);
-    Snek8Instruction instruction = snek8_opcodeDecode(opc);
-    enum Snek8ExecutionOutput out = instruction.exec(&CAST_PTR(Snek8Emulator, self)->ob_cpu, opc, instruction.code);
+    Snek8Instruction instruction = snek8_opcodeDecode((uint16_t) code);
+    enum Snek8ExecutionOutput out = instruction.exec(&CAST_PTR(Snek8Emulator, self)->ob_cpu, code, instruction.code);
     return PyLong_FromLong((long) out);
 }
 

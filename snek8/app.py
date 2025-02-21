@@ -12,7 +12,8 @@ PARENT_DIR: str = 'snek8'
 
 class Snek8App(QApplication):
     """
-    Py8 Emulator.
+    Snek8.
+    A Chip8 emulator writen in Python.
 
     Attributes
     ----------
@@ -137,7 +138,7 @@ class Snek8App(QApplication):
         self.initUI()
         self.snek8_main_win.show()
         self.timer.timeout.connect(self.emulate)
-        self.timer.start(500)
+        self.timer.start(1000 // self.fps)
 
     def initUI(self) -> None:
         self.snek8_main_win = Snek8MainWindow("Snek8 - Chip8 Emulator",
@@ -284,7 +285,7 @@ class Snek8App(QApplication):
             impl_flags |= (1 << 1)
         if self.snek8_impl_fx_changes_ir:
             impl_flags |= (1 << 2)
-        self.snek8_emulator = snek8core.Py8Emulator(implm_flags = impl_flags)
+        self.snek8_emulator = snek8core.Snek8Emulator(implm_flags = impl_flags)
         self.setStatusBarDefualt()
 
     def saveState(self) -> None:

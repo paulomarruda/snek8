@@ -109,28 +109,6 @@ _snek8_writeU16(char* code, uint16_t hex){
     code[5] = _snek8_its(hex & 0xF);
 }
 
-Snek8Opcode
-snek8_opcodeInit(uint16_t code){
-    return (Snek8Opcode){
-        .lsq = code & 0x000F,
-        .iq1 = (code & 0x00F0) >> 4,
-        .iq2 = (code & 0x0F00) >> 8,
-        .msq = (code & 0xF000) >> 12,
-    };
-}
-
-uint8_t
-snek8_opcodeGetByte(Snek8Opcode opcode){
-    return (opcode.iq1 << 4) | (opcode.lsq);
-}
-
-uint16_t
-snek8_opcodeGetAddr(Snek8Opcode opcode){
-    return (((uint16_t) opcode.iq2) << 8) |
-           (((uint16_t) opcode.iq1) << 4) |
-           ((uint16_t) opcode.lsq);
-}
-
 enum Snek8ExecutionOutput
 snek8_stackInit(Snek8Stack *stack){
     if (!stack){
@@ -142,7 +120,7 @@ snek8_stackInit(Snek8Stack *stack){
 }
 
 enum Snek8ExecutionOutput
-snek8_stackPush(Snek8Stack *stack, uint16_t* pc, Snek8Opcode opcode, char* code){
+snek8_stackPush(Snek8Stack *stack, uint16_t* pc, uint16_t opcode, char* code){
     if (!stack || !pc){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
@@ -174,6 +152,7 @@ snek8_cpuInit(Snek8CPU* cpu, uint8_t implm_flags){
     if (!cpu){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
+    srand(time(NULL));
     cpu->implm_flags = implm_flags;
     uint8_t fontset[SNEK8_SIZE_FONTSET_PIXELS] = {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -231,9 +210,6 @@ snek8_cpuLoadRom(Snek8CPU* cpu, const char* rom_file_path){
         return SNEK8_EXECOUT_ROM_FILE_FAILED_TO_READ;
     }
     fclose(rom_file);
-    // for (size_t i=SNEK8_MEM_ADDR_PROG_START; i<SNEK8_SIZE_RAM; i++){
-    //     printf("0x%02x ", cpu->memory[i]);
-    // }
     return SNEK8_EXECOUT_SUCCESS;
 }
 /**
@@ -272,13 +248,12 @@ _snek8_cpuDecrementPC(Snek8CPU* cpu){
 * @param `cpu`.
 * @return The opcode specified by the emulation process.
 */
-static Snek8Opcode
+static inline uint16_t
 _snek8_cpuGetOpcode(Snek8CPU cpu){
-    uint16_t code = cpu.memory[cpu.pc];
-    code <<= 8;
-    code |= cpu.memory[cpu.pc + 1];
-    printf("0x%04x\n", code);
-    return snek8_opcodeInit(code);
+    uint16_t opcode = cpu.memory[cpu.pc];
+    opcode <<= 8;
+    opcode |= cpu.memory[cpu.pc + 1];
+    return opcode;
 }
 
 enum Snek8ExecutionOutput
@@ -298,7 +273,7 @@ snek8_cpuSetKey(Snek8CPU* cpu, size_t key, bool value){
 * NOP
 */
 enum Snek8ExecutionOutput
-snek8_cpuExecutionError(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuExecutionError(Snek8CPU* cpu, uint16_t opcode, char* code){
     UNUSED(cpu);
     UNUSED(opcode);
     UNUSED(code);
@@ -307,9 +282,10 @@ snek8_cpuExecutionError(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
 
 /*
 * CLS
+* 0x00E0
 */
 enum Snek8ExecutionOutput
-snek8_cpuCLS(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuCLS(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
@@ -321,9 +297,10 @@ snek8_cpuCLS(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
 
 /*
 * RET
+* 0x00EE
 */
 enum Snek8ExecutionOutput
-snek8_cpuRET(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuRET(Snek8CPU* cpu, uint16_t opcode, char* code){
     UNUSED(opcode);
     UNUSED(code);
     if (!cpu){
@@ -334,24 +311,23 @@ snek8_cpuRET(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
 
 /*
 * CALL 0x0NNN
+* 0x2NNN
 */
 enum Snek8ExecutionOutput
-snek8_cpuCALL(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuCALL(Snek8CPU* cpu, uint16_t opcode, char* code){
     UNUSED(code);
     if (!cpu){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
-    }
-    if (cpu->sp == 16){
-        return SNEK8_EXECOUT_STACK_OVERFLOW;
     }
     return snek8_stackPush(&cpu->stack, &cpu->pc, opcode, code);
 }
 
 /*
-* JP 0x0NNN.
+* JP 0x0NNN
+* 0x1NNN
 */
 enum Snek8ExecutionOutput
-snek8_cpuJMP_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuJMP_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
@@ -361,269 +337,285 @@ snek8_cpuJMP_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
 }
 
 /*
-* SE V{0xX}, 0xKK.
+* SE V{0xX}, 0xKK
+* 0x3XKK
 */
 enum Snek8ExecutionOutput
-snek8_cpuSE_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
     uint8_t kk = snek8_opcodeGetByte(opcode);
-    size_t x = opcode.iq2;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     if (cpu->registers[x] == kk){
         _snek8_cpuIncrementPC(cpu);
     }
-    code[7] = _snek8_its((uint8_t) x);
+    code[7] = _snek8_its(x);
     _snek8_writeU8(code + 11, kk);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* SNE V{0xX}, 0xKK.
+* SNE V{0xX}, 0xKK
+* 0x4KK
 */
 enum Snek8ExecutionOutput
-snek8_cpuSNE_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSNE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
     uint8_t kk = snek8_opcodeGetByte(opcode);
-    size_t x = opcode.iq2;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     if (cpu->registers[x] != kk){
         _snek8_cpuIncrementPC(cpu);
     }
-    code[8] = _snek8_its((uint8_t) x);
+    code[8] = _snek8_its(x);
     _snek8_writeU8(code + 12, kk);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD V{0xX}, 0xKK.
+* LD V{0xX}, 0xKK
+* 0x6XKK
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
     uint8_t kk = snek8_opcodeGetByte(opcode);
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     cpu->registers[x] = kk;
-    code[7] = _snek8_its((uint8_t) x);
+    code[7] = _snek8_its(x);
     _snek8_writeU8(code + 11, kk);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* ADD V{0xX}, 0xKK.
+* ADD V{0xX}, 0xKK
+* 0x7XKK
 */
 enum Snek8ExecutionOutput
-snek8_cpuADD_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuADD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
     uint8_t kk = snek8_opcodeGetByte(opcode);
-    size_t x = opcode.iq2;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     cpu->registers[x] += kk;
-    code[8] = _snek8_its((uint8_t) x);
+    code[8] = _snek8_its(x);
     _snek8_writeU8(code + 12, kk);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* SE V{0xX}, V{0xY}.
+* SE V{0xX}, V{0xY}
+* 0x5XY0
 */
 enum Snek8ExecutionOutput
-snek8_cpuSE_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSE_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
     if (cpu->registers[x] == cpu->registers[y]){
         _snek8_cpuIncrementPC(cpu);
     }
-    code[7] = _snek8_its((uint8_t) x);
-    code[15] = _snek8_its((uint8_t) y);
+    code[7] = _snek8_its(x);
+    code[15] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* SNE V{0xX}, V{0xY}.
+* SNE V{0xX}, V{0xY}
+* 0x9XY0
 */
 enum Snek8ExecutionOutput
-snek8_cpuSNE_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSNE_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
     if (cpu->registers[x] != cpu->registers[y]){
         _snek8_cpuIncrementPC(cpu);
     }
-    code[8] = _snek8_its((uint8_t) x);
-    code[16] = _snek8_its((uint8_t) y);
+    code[8] = _snek8_its(x);
+    code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD V{0xX}, V{0xY}.
+* LD V{0xX}, V{0xY}
+* 0x8XY0
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
     cpu->registers[x] = cpu->registers[y];
-    code[7] = _snek8_its((uint8_t) x);
-    code[15] = _snek8_its((uint8_t) y);
+    code[7] = _snek8_its(x);
+    code[15] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* OR V{0xX}, V{0xY}.
+* OR V{0xX}, V{0xY}
+* 0x8XY1
 */
 enum Snek8ExecutionOutput
-snek8_cpuOR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuOR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
     cpu->registers[x] |= cpu->registers[y];
-    code[7] = _snek8_its((uint8_t) x);
-    code[15] = _snek8_its((uint8_t) y);
+    code[7] = _snek8_its(x);
+    code[15] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
 * AND V{0xX}, V{0xY}.
+* 0x8XY2
 */
 enum Snek8ExecutionOutput
-snek8_cpuAND_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuAND_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
     cpu->registers[x] &= cpu->registers[y];
-    code[8] = _snek8_its((uint8_t) x);
-    code[16] = _snek8_its((uint8_t) y);
+    code[8] = _snek8_its(x);
+    code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
 * XOR V{0xX}, V{0xY}.
+* 0x8XY3
 */
 enum Snek8ExecutionOutput
-snek8_cpuXOR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuXOR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
     cpu->registers[x] ^= cpu->registers[y];
-    code[8] = _snek8_its((uint8_t) x);
-    code[16] = _snek8_its((uint8_t) y);
+    code[8] = _snek8_its(x);
+    code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* ADD V{0xX}, V{0xY}.
+* ADD V{0xX}, V{0xY}
+* 0x8XY4
 */
 enum Snek8ExecutionOutput
-snek8_cpuADD_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuADD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
-    cpu->registers[0xF] = UINT8_MAX - cpu->registers[x] < cpu->registers[y]? 1:0;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
+    cpu->registers[0xF] = (UINT8_MAX - cpu->registers[x] < cpu->registers[y])? 1: 0;
     cpu->registers[x] += cpu->registers[y];
-    code[8] = _snek8_its((uint8_t) x);
-    code[16] = _snek8_its((uint8_t) y);
+    code[8] = _snek8_its(x);
+    code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* SUB V{0xX}, V{0xY}.
+* SUB V{0xX}, V{0xY}
+* 0x8XY5
 */
 enum Snek8ExecutionOutput
-snek8_cpuSUB_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSUB_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
-    cpu->registers[0xF] = cpu->registers[x] < cpu->registers[y]? 1:0;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
+    cpu->registers[0xF] = (cpu->registers[x] > cpu->registers[y])? 1: 0;
     cpu->registers[x] -= cpu->registers[y];
-    code[8] = _snek8_its((uint8_t) x);
-    code[16] = _snek8_its((uint8_t) y);
+    code[8] = _snek8_its(x);
+    code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* SUBN V{0xX}, V{0xY}.
+* SUBN V{0xX}, V{0xY}
+* 0x8XY7
 */
 enum Snek8ExecutionOutput
-snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
-    cpu->registers[0xF] = cpu->registers[x] > cpu->registers[y]? 1:0;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
+    cpu->registers[0xF] = cpu->registers[x] < cpu->registers[y]? 1:0;
     cpu->registers[x] = cpu->registers[y] - cpu->registers[x];
-    code[9] = _snek8_its((uint8_t) x);
-    code[17] = _snek8_its((uint8_t) y);
+    code[9] = _snek8_its(x);
+    code[17] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* SHR V{0xX}, V{0xY}.
+* SHR V{0xX}, V{0xY}
+* 0x8XY6
 */
 enum Snek8ExecutionOutput
-snek8_cpuSHR_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSHR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
-    if ((cpu->implm_flags & SNEK8_IMPLM_MODE_SHIFTS_USE_VY) > 0){
-            cpu->registers[x] = cpu->registers[y];
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
+    if (cpu->implm_flags & SNEK8_IMPLM_MODE_SHIFTS_USE_VY){
+        cpu->registers[x] = cpu->registers[y];
     }
-    cpu->registers[0xF] = (cpu->registers[x] & 0x1) != 0? 1:0;
+    cpu->registers[0xF] = (cpu->registers[x] & 0x1)? 1:0;
     cpu->registers[x] >>= 1;
-    code[8] = _snek8_its((uint8_t) x);
-    code[16] = _snek8_its((uint8_t) y);
+    code[8] = _snek8_its(x);
+    code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
 * SHL V{0xX}, V{0xY}.
+* 0x8XYE
 */
 enum Snek8ExecutionOutput
-snek8_cpuSHL_VX_VY(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSHL_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t y = opcode.iq1;
-    if ((cpu->implm_flags & SNEK8_IMPLM_MODE_SHIFTS_USE_VY) > 0){
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
+    if (cpu->implm_flags & SNEK8_IMPLM_MODE_SHIFTS_USE_VY){
             cpu->registers[x] = cpu->registers[y];
     }
-    cpu->registers[0xF] = (cpu->registers[x] & 0x80) != 0? 1:0;
+    cpu->registers[0xF] = (cpu->registers[x] & 0x80)? 1:0;
     cpu->registers[x] <<= 1;
-    code[8] = _snek8_its((uint8_t) x);
-    code[16] = _snek8_its((uint8_t) y);
+    code[8] = _snek8_its(x);
+    code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD I, 0x0NNN.
+* LD I, 0x0NNN
+* 0xANNN
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_I_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_I_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
@@ -634,20 +626,23 @@ snek8_cpuLD_I_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
 
 /*
 * JP V{0x0}, 0x0NNN.
+* 0xBNNN
+*
+* JP V{0xX}, 0x0XNN.
+* 0xBXNN
 */
 enum Snek8ExecutionOutput
-snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
     uint16_t addr = snek8_opcodeGetAddr(opcode);
-    size_t x = opcode.iq2;
-    if ((cpu->implm_flags & SNEK8_IMPLM_MODE_BNNN_USE_VX) > 0){
-            cpu->pc = addr + cpu->registers[x];
-            code[7] = _snek8_its((uint8_t) x);
-    }else {
-            cpu->pc = addr + cpu->registers[0];
+    uint8_t x = 0;
+    if (cpu->implm_flags & SNEK8_IMPLM_MODE_BNNN_USE_VX){
+        x = snek8_opcodeGetNibble(opcode, x);
     }
+    cpu->pc = addr + cpu->registers[x];
+    code[7] = _snek8_its(x);
     _snek8_writeU16(code + 11, addr);
     return SNEK8_EXECOUT_SUCCESS;
 }
@@ -656,15 +651,14 @@ snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
 * RND V{0xX}, 0xKK.
 */
 enum Snek8ExecutionOutput
-snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    srand(time(NULL));
-    size_t x = opcode.iq2;
     uint8_t kk = snek8_opcodeGetByte(opcode);
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     cpu->registers[x] = rand() & kk;
-    code[8] = _snek8_its((uint8_t) x);
+    code[8] = _snek8_its(x);
     _snek8_writeU8(code + 12, kk);
     return SNEK8_EXECOUT_SUCCESS;
 }
@@ -677,17 +671,24 @@ _snek8_cpuGetPixel(Snek8CPU* cpu, size_t x, size_t y){
 }
 
 /*
-* DRW V{0xX}, V{0xY}, 0xN.
+* DRW V{0xX}, V{0xY}, 0xN
+* 0xDXYN
 */
 enum Snek8ExecutionOutput
-snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
     cpu->registers[0xF] = 0;
-    uint8_t px = cpu->registers[opcode.iq2];
-    uint8_t py = cpu->registers[opcode.iq1];
-    for (uint8_t col = 0; col < opcode.lsq; col++){
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t y = snek8_opcodeGetNibble(opcode, 1);
+    uint8_t n = snek8_opcodeGetNibble(opcode, 0);
+    if (cpu->ir + n > SNEK8_MEM_ADDR_RAM_END){
+        return SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS;
+    }
+    uint8_t px = cpu->registers[x];
+    uint8_t py = cpu->registers[y];
+    for (uint8_t col = 0; col < n; col++){
         uint8_t byte = cpu->memory[cpu->ir + col];
         for (uint8_t row = 0; row < 8; row++){
             uint8_t bit = byte & (0x80u >> row);
@@ -698,181 +699,193 @@ snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
             }
         }
     }
-    code[8] = _snek8_its(opcode.iq2);
-    code[16] = _snek8_its(opcode.iq1);
-    code[22] = _snek8_its(opcode.lsq);
+    code[8] = _snek8_its(x);
+    code[16] = _snek8_its(x);
+    code[22] = _snek8_its(n);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* SKP V{0xX}.
+* SKP V{0xX}
+* 0xEX9E
 */
 enum Snek8ExecutionOutput
-snek8_cpuSKP_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSKP_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t key = cpu->registers[x];
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t key = cpu->registers[x];
     if (snek8_cpuGetKeyVal(*cpu, key)){
         _snek8_cpuIncrementPC(cpu);
     }
-    code[8] = _snek8_its((uint8_t) x);
+    code[8] = _snek8_its(x);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* SKNP V{0xX}.
+* SKNP V{0xX}
+* 0xEXA1
 */
 enum Snek8ExecutionOutput
-snek8_cpuSKNP_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuSKNP_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    size_t key = cpu->registers[x];
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    uint8_t key = cpu->registers[x];
     if (!snek8_cpuGetKeyVal(*cpu, key)){
         _snek8_cpuIncrementPC(cpu);
     }
-    code[9] = _snek8_its((uint8_t) x);
+    code[9] = _snek8_its(x);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD V{0xX}, DT.
+* LD V{0xX}, DT
+* 0xFX07
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_DT(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_VX_DT(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     cpu->registers[x] = cpu->dt;
-    code[7] = _snek8_its((uint8_t) x);
+    code[7] = _snek8_its(x);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD V{0xX}, K{0xK}.
+* LD V{0xX}, K{0xK}
+* 0xFX0A
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_K(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_VX_K(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    bool key_found = false;
-    size_t x = opcode.iq2;
-    size_t key_index = 0;
-    while (key_index < 16){
-        if (snek8_cpuGetKeyVal(*cpu, key_index)){
-            cpu->registers[x] = (uint8_t) key_index;
-            key_found = true;
-            break;
-        }
-        key_index++;
-    }
-    if (!key_found){
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    if (!cpu->keys){
         _snek8_cpuDecrementPC(cpu);
-        code[7] = _snek8_its((uint8_t) x);
+        code[7] = _snek8_its(x);
         code[15] = '-';
         return SNEK8_EXECOUT_SUCCESS;
     }
-    code[7] = _snek8_its((uint8_t) x);
-    code[15] = _snek8_its((uint8_t) key_index);
+    for (size_t key = 0; key < SNEK8_SIZE_KEYSET; key++){
+        if (snek8_cpuGetKeyVal(*cpu, key)){
+            cpu->registers[x] = key;
+            code[7] = _snek8_its(x);
+            code[15] = _snek8_its(key);
+            break;
+        }
+    }
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
 * LD DT, V{0xX}.
+* 0xFX15
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_DT_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_DT_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     cpu->dt = cpu->registers[x];
-    code[11] = _snek8_its((uint8_t) x);
+    code[11] = _snek8_its(x);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD ST, V{0xX}.
+* LD ST, V{0xX}
+* 0xFX18
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_ST_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_ST_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     cpu->st = cpu->registers[x];
-    code[11] = _snek8_its((uint8_t) x);
+    code[11] = _snek8_its(x);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* ADD I, V{0xX}.
+* ADD I, V{0xX}
+* 0xFX1E
 */
 enum Snek8ExecutionOutput
-snek8_cpuADD_I_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuADD_I_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
-    cpu->ir += cpu->registers[x];
-    code[11] = _snek8_its((uint8_t) x);
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    cpu->ir = (cpu->ir + cpu->registers[x]) & 0x0FFF;
+    code[11] = _snek8_its(x);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD F, V{0xX}.
+* LD F, V{0xX}
+* 0xFX29
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_F_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_F_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     cpu->ir = SNEK8_MEM_ADDR_FONTSET_START + (SNEK8_SIZE_FONTSET_PIXEL_PER_SPRITE * cpu->registers[x]);
-    code[10] = _snek8_its((uint8_t) x);
+    code[10] = _snek8_its(x);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD B, V{0xX}.
+* LD B, V{0xX}
+* 0xFX29
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_B_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_B_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
+    if (cpu->ir + 2 > SNEK8_MEM_ADDR_RAM_END){
+        return SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS;
+    }
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     uint8_t value = cpu->registers[x];
     cpu->memory[cpu->ir + 2] = value % 10;
     value /= 10;
     cpu->memory[cpu->ir + 1] = value % 10;
     value /= 10;
     cpu->memory[cpu->ir] = value % 10;
-    code[10] = _snek8_its((uint8_t) x);
+    code[10] = _snek8_its(x);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 /*
-* LD [I], V{0xX}.
+* LD [I], V{0xX}
+* 0xFX55
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    if (cpu->ir + x > SNEK8_MEM_ADDR_RAM_END){
+        return SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS;
+    }
     if ((cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGE_I)){
-        for (size_t i=0; i<=x; i++){
+        for (size_t i = 0; i <= x; i++){
             cpu->memory[cpu->ir + i] = cpu->registers[i];
             cpu->ir++;
         }
     }else {
-        for (size_t i=0; i<=x; i++){
+        for (size_t i = 0; i <= x; i++){
             cpu->memory[cpu->ir + i] = cpu->registers[i];
         }
     }
@@ -881,14 +894,18 @@ snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
 }
 
 /*
-* LD V{0xX}, [I].
+* LD V{0xX}, [I]
+* 0xFX55
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
+snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (!cpu || !code){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
-    size_t x = opcode.iq2;
+    uint8_t x = snek8_opcodeGetNibble(opcode, 2);
+    if (cpu->ir + x > SNEK8_MEM_ADDR_RAM_END){
+        return SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS;
+    }
     if ((cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGE_I)){
         for (size_t i=0; i<=x; i++){
             cpu->registers[i] = cpu->registers[cpu->ir + i];
@@ -899,16 +916,19 @@ snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, Snek8Opcode opcode, char* code){
             cpu->registers[i] = cpu->registers[cpu->ir + i];
         }
     }
-    code[7] = _snek8_its((uint8_t) x);
+    code[7] = _snek8_its(x);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
 Snek8Instruction
-snek8_opcodeDecode(Snek8Opcode opcode){
+snek8_opcodeDecode(uint16_t opcode){
     Snek8Instruction instruction;
-    switch (opcode.msq) {
+    uint8_t msq = snek8_opcodeGetNibble(opcode, 3);
+    uint8_t lsq = snek8_opcodeGetNibble(opcode, 0);
+    uint8_t iq1 = snek8_opcodeGetNibble(opcode, 1);
+    switch (msq) {
         case 0x0:
-            switch (opcode.lsq) {
+            switch (lsq) {
                 case 0x0:
                     instruction = (Snek8Instruction) {
                         .code = "CLS",
@@ -970,7 +990,7 @@ snek8_opcodeDecode(Snek8Opcode opcode){
             };
             break;
         case 0x8:
-            switch (opcode.lsq) {
+            switch (lsq) {
                 case 0x0:
                     instruction = (Snek8Instruction) {
                         .code = "LD V{0xX}, V{0xY}",
@@ -1064,7 +1084,7 @@ snek8_opcodeDecode(Snek8Opcode opcode){
                 };
             break;
         case 0xE:
-            switch (opcode.lsq) {
+            switch (lsq) {
                 case 0xE:
                     instruction = (Snek8Instruction) {
                         .code = "SKP V{0xX}",
@@ -1085,7 +1105,7 @@ snek8_opcodeDecode(Snek8Opcode opcode){
             }
             break;
         case 0xF:
-            switch (opcode.lsq) {
+            switch (lsq) {
                 case 0x7:
                     instruction = (Snek8Instruction) {
                         .code = "LD V{0xX}, DT",
@@ -1099,7 +1119,7 @@ snek8_opcodeDecode(Snek8Opcode opcode){
                     };
                     break;
                 case 0x5:
-                    switch (opcode.iq1) {
+                    switch (iq1) {
                         case 0x1:
                             instruction = (Snek8Instruction) {
                                 .code = "LD DT, V{0xX}",
@@ -1164,11 +1184,12 @@ snek8_opcodeDecode(Snek8Opcode opcode){
 
 enum Snek8ExecutionOutput
 snek8_cpuStep(Snek8CPU* cpu, Snek8Instruction* instruction){
-    Snek8Opcode opcode = _snek8_cpuGetOpcode(*cpu);
+    uint16_t opcode = _snek8_cpuGetOpcode(*cpu);
     _snek8_cpuIncrementPC(cpu);
     *instruction = snek8_opcodeDecode(opcode);
+    enum Snek8ExecutionOutput out =  instruction->exec(cpu, opcode, instruction->code);
     _snek8_cpuTickTimers(cpu);
-    return instruction->exec(cpu, opcode, instruction->code);
+    return out;
 }
 
 #ifdef __cplusplus

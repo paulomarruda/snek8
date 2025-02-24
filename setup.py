@@ -1,8 +1,15 @@
+"""
+@file setup.py
+@author Paulo Arruda
+@license GPL-3
+@brief Building script for the package.
+"""
+
 from setuptools import setup, Extension
 import os
 import sys
 
-PARENT_DIR: str = 'snek8/'
+PARENT_DIR: str = 'app/'
 
 def read(filename: str) -> str:
     return open(os.path.join(os.path.dirname(__file__), filename)).read()

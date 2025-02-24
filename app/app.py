@@ -1,3 +1,9 @@
+"""
+@file app.py
+@author Paulo Arruda
+@license GPL-3
+@brief Implementation of the main app functionalities.
+"""
 import os
 import sys
 from snek8 import core as snek8core

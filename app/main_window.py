@@ -1,5 +1,5 @@
 """
-@file: py8_main_window.py
+@file: main_window.py
 @author: Paulo Arruda
 @license: GPL-3
 @brief: Implementation of the emulator' main window.

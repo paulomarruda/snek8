@@ -4,6 +4,7 @@
 @license: GPL-3
 @brief: Implementation of the emulator' display.
 """
+
 from typing import List, Annotated
 from snek8.core import SIZE_GRAPHICS_WIDTH, SIZE_GRAPHICS_HEIGHT, SIZE_GRAPHICS
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent

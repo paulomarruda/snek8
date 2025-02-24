@@ -1,4 +1,4 @@
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension
 import os
 import sys
 
@@ -10,7 +10,7 @@ def read(filename: str) -> str:
 if os.name != 'nt':
     if sys.platform == 'darwin' and 'APPVEYOR' in os.environ:
         os.environ['CC'] = 'gcc-8'
-    py8_module = Extension(
+    snek8_core = Extension(
         name = 'snek8.core',
         sources = [
             os.path.join(PARENT_DIR, '_core/src/cpu.c'),
@@ -32,7 +32,7 @@ if os.name != 'nt':
         ]
     )
 else:
-    py8_module = Extension(
+    snek8_core = Extension(
         name = "snek8.core",
         sources = [
             os.path.join(PARENT_DIR, '_core/src/cpu.c'),
@@ -58,9 +58,17 @@ setup(
     description = 'Snek8 - A Chip8 Emulator written in Python.',
     long_description = read('README.md'),
     long_description_content_type='text/markdown',
-    license = 'MIT',
-    url = 'https://github.com/paulomarruda/py8/',
-    ext_modules = [py8_module],
-    packages = find_packages(where=PARENT_DIR),
+    license = 'GPL-3',
+    url = 'https://github.com/paulomarruda/snek8/',
+    ext_modules = [snek8_core],
+    packages = ['snek8'],
+    package_dir = {'snek8': PARENT_DIR},
     python_requires = '>=3.13',
+    classifiers = [
+        "Topic :: Emulator",
+        "Topic :: Emulation",
+        "Topic :: Chip8",
+        "Programming Language :: Python",
+        "Programming Language :: C",
+    ],
 )

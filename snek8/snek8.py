@@ -1,5 +1,5 @@
 import sys
-from snek8_app import Snek8App
+from app import Snek8App
 
 def main() -> None:
     app = Snek8App(sys.argv)

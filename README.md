@@ -1,9 +1,8 @@
-# Py8
-![Py8 icon](./py8_icon.png)
-Py8 is a CHIP8 emulator writen in C/Python. Py8 aims to ship an easy to use emulator with a comprehensive GUI.
+# Snek8
+Snek8 is a [CHIP8](https://en.wikipedia.org/wiki/CHIP-8) emulator writen in C/Python. Snek8 aims to ship an easy to use emulator with a comprehensive GUI.
 
 ## License
-Py8 is licensed under the [GNU Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).
+Snek8 is licensed under the [GNU Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
 ## Installation
 

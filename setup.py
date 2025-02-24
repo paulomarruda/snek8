@@ -13,11 +13,11 @@ if os.name != 'nt':
     py8_module = Extension(
         name = 'snek8.core',
         sources = [
-            os.path.join(PARENT_DIR, 'core/src/cpu.c'),
-            os.path.join(PARENT_DIR, 'core/src/core.c'),
+            os.path.join(PARENT_DIR, '_core/src/cpu.c'),
+            os.path.join(PARENT_DIR, '_core/src/core.c'),
         ],
         include_dirs = [
-            os.path.join(PARENT_DIR, 'core/include/'),
+            os.path.join(PARENT_DIR, '_core/include/'),
         ],
         language = 'c',
         extra_compile_args = [
@@ -35,10 +35,10 @@ else:
     py8_module = Extension(
         name = "snek8.core",
         sources = [
-            os.path.join(PARENT_DIR, 'core/src/cpu.c'),
-            os.path.join(PARENT_DIR, 'core/src/emulator.c'),
+            os.path.join(PARENT_DIR, '_core/src/cpu.c'),
+            os.path.join(PARENT_DIR, '_core/src/emulator.c'),
         ],
-        include_dirs = os.path.join(PARENT_DIR, 'core/include/'),
+        include_dirs = os.path.join(PARENT_DIR, '_core/include/'),
         language = 'c',
         extra_compile_args = [
             '/Wall',
@@ -61,8 +61,6 @@ setup(
     license = 'MIT',
     url = 'https://github.com/paulomarruda/py8/',
     ext_modules = [py8_module],
-    packages = find_packages(include=[PARENT_DIR], exclude=["snek8.core"]),
-    py_modules=['snek8.__init__'],
+    packages = find_packages(where=PARENT_DIR),
     python_requires = '>=3.13',
-
 )

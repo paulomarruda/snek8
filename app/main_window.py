@@ -136,7 +136,7 @@ class Snek8MainWindow(QMainWindow):
         """
         key = a0.key()
         if key in self.cpu_key_map:
-            self.cpu_key_map[key][0]()
+            self.cpu_key_map[key][1]()
         elif key in self.app_key_map:
             self.app_key_map[key]()
 
@@ -146,4 +146,4 @@ class Snek8MainWindow(QMainWindow):
         """
         key = a0.key()
         if key in self.cpu_key_map:
-            self.cpu_key_map[key][1]()
+            self.cpu_key_map[key][0]()

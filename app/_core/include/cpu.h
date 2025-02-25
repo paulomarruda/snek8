@@ -282,9 +282,9 @@ enum Snek8ExecutionOutput{
 *           iq2  |  1
 *           lsq  |  0
 */
-inline uint8_t
+static inline uint8_t
 snek8_opcodeGetNibble(uint16_t opcode, size_t indx){
-    return (opcode >> (4 * indx)) & 0xF;
+    return (opcode >> (4u * indx)) & 0xFu;
 }
 
 /**
@@ -296,9 +296,9 @@ snek8_opcodeGetNibble(uint16_t opcode, size_t indx){
 *
 * @param[in] `opcode`
 */
-inline uint16_t
+static inline uint16_t
 snek8_opcodeGetAddr(uint16_t opcode){
-    return opcode & 0x0FFF;
+    return opcode & 0x0FFFu;
 }
 
 /**
@@ -310,9 +310,9 @@ snek8_opcodeGetAddr(uint16_t opcode){
 *
 * @param[in] `opcode`.
 */
-inline uint8_t
+static inline uint8_t
 snek8_opcodeGetByte(uint16_t opcode){
-    return opcode & 0xFF;
+    return opcode & 0x00FFu;
 }
 
 /**
@@ -426,9 +426,9 @@ snek8_cpuSetKey(Snek8CPU* cpu, size_t key, bool value);
 * @param[in] `key`.
 * @return The value of the key.
 */
-inline bool
+static inline bool
 snek8_cpuGetKeyVal(Snek8CPU cpu, size_t key){
-    return (cpu.keys & (1 << key))? false: true;
+    return (cpu.keys & (1u << key))? true: false;
 }
 
 /*

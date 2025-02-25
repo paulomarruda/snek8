@@ -121,9 +121,6 @@ snek8_stackInit(Snek8Stack *stack){
 
 enum Snek8ExecutionOutput
 snek8_stackPush(Snek8Stack *stack, uint16_t* pc, uint16_t opcode, char* code){
-    if (!stack || !pc){
-        return SNEK8_EXECOUT_EMPTY_STRUCT;
-    }
     if (SNEK8_SIZE_STACK == stack->sp){
         return SNEK8_EXECOUT_STACK_OVERFLOW;
     }
@@ -136,9 +133,6 @@ snek8_stackPush(Snek8Stack *stack, uint16_t* pc, uint16_t opcode, char* code){
 
 enum Snek8ExecutionOutput
 snek8_stackPop(Snek8Stack *stack, uint16_t* pc){
-    if (!stack){
-        return SNEK8_EXECOUT_EMPTY_STRUCT;
-    }
     if (0 == stack->sp){
         return SNEK8_EXECOUT_STACK_EMPTY;
     }
@@ -212,6 +206,7 @@ snek8_cpuLoadRom(Snek8CPU* cpu, const char* rom_file_path){
     fclose(rom_file);
     return SNEK8_EXECOUT_SUCCESS;
 }
+
 /**
 * @brief Manages the CPU timers.
 *
@@ -264,7 +259,7 @@ snek8_cpuSetKey(Snek8CPU* cpu, size_t key, bool value){
     if (value){
         cpu->keys |= (1 << key);
     }else{
-        cpu->keys ^= (1 << key);
+        cpu->keys &= (~(1 << key));
     }
     return SNEK8_EXECOUT_SUCCESS;
 }
@@ -582,7 +577,7 @@ snek8_cpuSHR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (cpu->implm_flags & SNEK8_IMPLM_MODE_SHIFTS_USE_VY){
         cpu->registers[x] = cpu->registers[y];
     }
-    cpu->registers[0xF] = (cpu->registers[x] & 0x1)? 1:0;
+    cpu->registers[0xF] = cpu->registers[x] & 0x1;
     cpu->registers[x] >>= 1;
     code[8] = _snek8_its(x);
     code[16] = _snek8_its(y);
@@ -603,7 +598,7 @@ snek8_cpuSHL_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (cpu->implm_flags & SNEK8_IMPLM_MODE_SHIFTS_USE_VY){
             cpu->registers[x] = cpu->registers[y];
     }
-    cpu->registers[0xF] = (cpu->registers[x] & 0x80)? 1:0;
+    cpu->registers[0xF] = (cpu->registers[x] & 0x80) >> 7u;
     cpu->registers[x] <<= 1;
     code[8] = _snek8_its(x);
     code[16] = _snek8_its(y);
@@ -879,13 +874,13 @@ snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (cpu->ir + x > SNEK8_MEM_ADDR_RAM_END){
         return SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS;
     }
-    if ((cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGE_I)){
-        for (size_t i = 0; i <= x; i++){
+    if (cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGE_I){
+        for (uint8_t i = 0; i <= x; i++){
             cpu->memory[cpu->ir + i] = cpu->registers[i];
             cpu->ir++;
         }
     }else {
-        for (size_t i = 0; i <= x; i++){
+        for (uint8_t i = 0; i <= x; i++){
             cpu->memory[cpu->ir + i] = cpu->registers[i];
         }
     }
@@ -895,7 +890,7 @@ snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
 
 /*
 * LD V{0xX}, [I]
-* 0xFX55
+* 0xFX65
 */
 enum Snek8ExecutionOutput
 snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, uint16_t opcode, char* code){
@@ -906,14 +901,14 @@ snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (cpu->ir + x > SNEK8_MEM_ADDR_RAM_END){
         return SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS;
     }
-    if ((cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGE_I)){
-        for (size_t i=0; i<=x; i++){
-            cpu->registers[i] = cpu->registers[cpu->ir + i];
+    if (cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGE_I){
+        for (uint8_t i=0; i<=x; i++){
+            cpu->registers[i] = cpu->memory[cpu->ir + i];
             cpu->ir++;
         }
     }else {
-        for (size_t i=0; i<=x; i++){
-            cpu->registers[i] = cpu->registers[cpu->ir + i];
+        for (uint8_t i=0; i<=x; i++){
+            cpu->registers[i] = cpu->memory[cpu->ir + i];
         }
     }
     code[7] = _snek8_its(x);
@@ -1187,7 +1182,7 @@ snek8_cpuStep(Snek8CPU* cpu, Snek8Instruction* instruction){
     uint16_t opcode = _snek8_cpuGetOpcode(*cpu);
     _snek8_cpuIncrementPC(cpu);
     *instruction = snek8_opcodeDecode(opcode);
-    enum Snek8ExecutionOutput out =  instruction->exec(cpu, opcode, instruction->code);
+    enum Snek8ExecutionOutput out = instruction->exec(cpu, opcode, instruction->code);
     _snek8_cpuTickTimers(cpu);
     return out;
 }

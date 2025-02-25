@@ -7,8 +7,8 @@
 import os
 import sys
 from snek8 import core as snek8core
-from main_window import Snek8MainWindow
-from screen import Snek8Screen
+from snek8_main_window import Snek8MainWindow
+from snek8_screen import Snek8Screen
 from typing import List, Dict, Callable
 from PyQt6.QtWidgets import QApplication, QFileDialog
 from PyQt6.QtGui import QIcon, QGuiApplication
@@ -55,71 +55,71 @@ class Snek8App(QApplication):
         return {
             ## Chip8 keyset
             Qt.Key.Key_1: [
-                lambda: self.snek8_emulator.setKeyValue(0x1, False),
                 lambda: self.snek8_emulator.setKeyValue(0x1, True),
+                lambda: self.snek8_emulator.setKeyValue(0x1, False),
             ],
             Qt.Key.Key_2: [
-                lambda: self.snek8_emulator.setKeyValue(0x2, False),
                 lambda: self.snek8_emulator.setKeyValue(0x2, True),
+                lambda: self.snek8_emulator.setKeyValue(0x2, False),
             ],
             Qt.Key.Key_3: [
-                lambda: self.snek8_emulator.setKeyValue(0x3, False),
                 lambda: self.snek8_emulator.setKeyValue(0x3, True),
+                lambda: self.snek8_emulator.setKeyValue(0x3, False),
             ],
             Qt.Key.Key_4: [
-                lambda: self.snek8_emulator.setKeyValue(0xC, False),
                 lambda: self.snek8_emulator.setKeyValue(0xC, True),
+                lambda: self.snek8_emulator.setKeyValue(0xC, False),
             ],
 
             Qt.Key.Key_Q: [
-                lambda: self.snek8_emulator.setKeyValue(0x4, False),
                 lambda: self.snek8_emulator.setKeyValue(0x4, True),
+                lambda: self.snek8_emulator.setKeyValue(0x4, False),
             ],
             Qt.Key.Key_W: [
-                lambda: self.snek8_emulator.setKeyValue(0x5, False),
                 lambda: self.snek8_emulator.setKeyValue(0x5, True),
+                lambda: self.snek8_emulator.setKeyValue(0x5, False),
             ],
             Qt.Key.Key_E: [
-                lambda: self.snek8_emulator.setKeyValue(0x6, False),
                 lambda: self.snek8_emulator.setKeyValue(0x6, True),
+                lambda: self.snek8_emulator.setKeyValue(0x6, False),
             ],
             Qt.Key.Key_R: [
-                lambda: self.snek8_emulator.setKeyValue(0xD, False),
                 lambda: self.snek8_emulator.setKeyValue(0xD, True),
+                lambda: self.snek8_emulator.setKeyValue(0xD, False),
             ],
 
             Qt.Key.Key_A: [
-                lambda: self.snek8_emulator.setKeyValue(0x7, False),
-                lambda: self.snek8_emulator.setKeyValue(0x7, True),
+                lambda: self.snek8_emulator.setKeyValue(0xC, True),
+                lambda: self.snek8_emulator.setKeyValue(0xC, False),
             ],
             Qt.Key.Key_S: [
-                lambda: self.snek8_emulator.setKeyValue(0x8, False),
                 lambda: self.snek8_emulator.setKeyValue(0x8, True),
+                lambda: self.snek8_emulator.setKeyValue(0x8, False),
             ],
             Qt.Key.Key_D: [
-                lambda: self.snek8_emulator.setKeyValue(0x9, False),
                 lambda: self.snek8_emulator.setKeyValue(0x9, True),
+                lambda: self.snek8_emulator.setKeyValue(0x9, False),
             ],
             Qt.Key.Key_F: [
-                lambda: self.snek8_emulator.setKeyValue(0xE, False),
                 lambda: self.snek8_emulator.setKeyValue(0xE, True),
+                lambda: self.snek8_emulator.setKeyValue(0xE, False),
             ],
 
             Qt.Key.Key_Y: [
-                lambda: self.snek8_emulator.setKeyValue(0xA, False),
                 lambda: self.snek8_emulator.setKeyValue(0xA, True),
+                lambda: self.snek8_emulator.setKeyValue(0xA, False),
             ],
             Qt.Key.Key_X: [
-                lambda: self.snek8_emulator.setKeyValue(0x0, False),
                 lambda: self.snek8_emulator.setKeyValue(0x0, True),
+                lambda: self.snek8_emulator.setKeyValue(0x0, False),
             ],
             Qt.Key.Key_C: [
-                lambda: self.snek8_emulator.setKeyValue(0xB, False),
                 lambda: self.snek8_emulator.setKeyValue(0xB, True),
+                lambda: self.snek8_emulator.setKeyValue(0xB, False),
             ],
             Qt.Key.Key_V: [
-                lambda: self.snek8_emulator.setKeyValue(0xF, False),
                 lambda: self.snek8_emulator.setKeyValue(0xF, True),
+                lambda: self.snek8_emulator.setKeyValue(0xF, False),
             ],
         }
     @property
@@ -165,7 +165,7 @@ class Snek8App(QApplication):
         self.snek8_impl_fx_changes_ir = False
         self.timer = QTimer()
         self.is_paused = False
-        self.fps = 120
+        self.fps = 60
         self.snek8_emulator = snek8core.Snek8Emulator(implm_flags = 0)
 
     def initMenus(self) -> None:
@@ -302,10 +302,3 @@ class Snek8App(QApplication):
 
     def showAbout(self) -> None:
         pass
-
-def main() -> None:
-    app = Snek8App(sys.argv)
-    sys.exit(app.exec())
-
-if __name__ == '__main__':
-    main()

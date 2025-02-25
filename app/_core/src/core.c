@@ -472,6 +472,7 @@ PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_TURN_FLAGS_OFF,
              "ValueError\n"
              "\tIf the implm is not a valid value."
 );
+
 static PyObject*
 snek8_emulatorSetRunning(PyObject* self, PyObject* args, PyObject* kwargs){
     bool is_running;
@@ -507,7 +508,7 @@ snek8_emulatorSetKeyValue(PyObject* self, PyObject* args, PyObject* kwargs){
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ib", kwlist, &index, &value)){
         return NULL;
     }
-    if (index < 0 || index >= 16){
+            if (index < 0 || index >= 16){
         PyErr_Format(PyExc_IndexError, "Key index must be between 0 and 15 (incl.). Value recieved: %d.", index);
         return NULL;
     }

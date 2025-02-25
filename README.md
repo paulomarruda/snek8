@@ -1,10 +1,13 @@
 # Snek8
-Snek8 is a [CHIP8](https://en.wikipedia.org/wiki/CHIP-8) emulator writen in C/Python. Snek8 aims to ship an easy to use emulator with a comprehensive GUI.
+Snek8 is a [CHIP8](https://en.wikipedia.org/wiki/CHIP-8) emulator writen in C/Python. Snek8 aims to ship an easy to use emulator with a comprehensive GUI. Most of CHIP8 emulators rely heavely on the command line, which can frustrate users that are not used to it; hence, this project aims to chip an executable with everything the user needs to play (except the ROMs).
 
 ## License
 Snek8 is licensed under the [GNU Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
-## Installation
+## Executables and Installation
+The link for the executables can be found on the project's [page](https://paulomarruda.github.io/snek8)
+
+If you prefer, you can build the project from source:
 
 ### Linux
 
@@ -20,7 +23,8 @@ python setup.py install
 
 ### Keys
 
-The COSMAC-VIP had a hexadecimal keypad
+The COSMAC-VIP had a hexadecimal keypad as follows:
+
 
 
 | `1` | `2` | `3` | `C` |
@@ -29,7 +33,10 @@ The COSMAC-VIP had a hexadecimal keypad
 | `7` | `8` | `9` | `E` |
 | `A` | `0` | `B` | `F` |
 
+
 Our emulator maps this keypad to a the modern computer keyboard as follows:
+
+
 
 | `1` | `2` | `3` | `4` |
 |-----|-----|-----|-----|
@@ -46,5 +53,10 @@ We do not include any ROM file here, but you can encounter CHIP8 ROMs all over i
 - [https://chip-8.github.io/links/](https://chip-8.github.io/links/)
 
 ### Tested ROMs
+
+| ROM Name                                                                                          |      Working       |     Flags     |
+|:--------------------------------------------------------------------------------------------------|:------------------:|:-------------:|
+|[Keypad Test](https://github.com/kripod/chip8-roms/blob/master/programs/Keypad%20Test%20%5BHap%2C%202006%5D.ch8)| :heavy_check_mark: |               |
+|[IBM Logo](https://github.com/kripod/chip8-roms/blob/master/programs/IBM%20Logo.ch8)| :heavy_check_mark: |  |
 
 ## TO-DOs

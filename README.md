@@ -56,7 +56,9 @@ We do not include any ROM file here, but you can encounter CHIP8 ROMs all over i
 
 | ROM Name                                                                                          |      Working       |     Flags     |
 |:--------------------------------------------------------------------------------------------------|:------------------:|:-------------:|
-|[Keypad Test](https://github.com/kripod/chip8-roms/blob/master/programs/Keypad%20Test%20%5BHap%2C%202006%5D.ch8)| :heavy_check_mark: |               |
+|[CHIP-8 splash screen](https://github.com/Timendus/chip8-test-suite/raw/main/bin/1-chip8-logo.ch8)| :heavy_check_mark: | |
 |[IBM Logo](https://github.com/kripod/chip8-roms/blob/master/programs/IBM%20Logo.ch8)| :heavy_check_mark: |  |
+|[Keypad Test](https://github.com/kripod/chip8-roms/blob/master/programs/Keypad%20Test%20%5BHap%2C%202006%5D.ch8)| :heavy_check_mark: |               |
+|[Corax+ opcode test](https://github.com/Timendus/chip8-test-suite/raw/main/bin/3-corax+.ch8)| :heavy_check_mark: | |
 
 ## TO-DOs

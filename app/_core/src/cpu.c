@@ -512,6 +512,10 @@ snek8_cpuXOR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
 /*
 * ADD V{0xX}, V{0xY}
 * 0x8XY4
+* note: The reason we use the variable `carry` below instead of assigning
+* the flag direct to V{0xF} is that V{0xF} could also be used in the operation,
+* and thus, if the flag assignment occurs before the ADD operation is done,
+* the value stored in V{0xF} is lost and the operation's result is incorrect.
 */
 enum Snek8ExecutionOutput
 snek8_cpuADD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
@@ -520,8 +524,9 @@ snek8_cpuADD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     }
     uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     uint8_t y = snek8_opcodeGetNibble(opcode, 1);
-    cpu->registers[0xF] = (UINT8_MAX - cpu->registers[x] < cpu->registers[y])? 1: 0;
+    uint8_t carry = (UINT8_MAX - cpu->registers[x]) < cpu->registers[y]? 1: 0;
     cpu->registers[x] += cpu->registers[y];
+    cpu->registers[0xF] = carry;
     code[8] = _snek8_its(x);
     code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
@@ -530,6 +535,10 @@ snek8_cpuADD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
 /*
 * SUB V{0xX}, V{0xY}
 * 0x8XY5
+* note: The reason we use the variable `not_borrow` below instead of assigning
+* the flag direct to V{0xF} is that V{0xF} could also be used in the operation,
+* and thus, if the flag assignment occurs before the SUB operation is done,
+* the value stored in V{0xF} is lost and the operation's result is incorrect.
 */
 enum Snek8ExecutionOutput
 snek8_cpuSUB_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
@@ -538,8 +547,9 @@ snek8_cpuSUB_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     }
     uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     uint8_t y = snek8_opcodeGetNibble(opcode, 1);
-    cpu->registers[0xF] = (cpu->registers[x] > cpu->registers[y])? 1: 0;
+    uint8_t not_borrow = cpu->registers[x] >= cpu->registers[y]? 1: 0;
     cpu->registers[x] -= cpu->registers[y];
+    cpu->registers[0xF] = not_borrow;
     code[8] = _snek8_its(x);
     code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
@@ -548,6 +558,10 @@ snek8_cpuSUB_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
 /*
 * SUBN V{0xX}, V{0xY}
 * 0x8XY7
+* note: The reason we use the variable `not_borrow` below instead of assigning
+* the flag direct to V{0xF} is that V{0xF} could also be used in the operation,
+* and thus, if the flag assignment occurs before the SUBN operation is done,
+* the value stored in V{0xF} is lost and the operation's result is incorrect.
 */
 enum Snek8ExecutionOutput
 snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
@@ -556,8 +570,9 @@ snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     }
     uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     uint8_t y = snek8_opcodeGetNibble(opcode, 1);
-    cpu->registers[0xF] = cpu->registers[x] < cpu->registers[y]? 1:0;
+    uint8_t not_borrow = cpu->registers[y] >= cpu->registers[x]? 1: 0;
     cpu->registers[x] = cpu->registers[y] - cpu->registers[x];
+    cpu->registers[0xF] = not_borrow;
     code[9] = _snek8_its(x);
     code[17] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
@@ -566,6 +581,10 @@ snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
 /*
 * SHR V{0xX}, V{0xY}
 * 0x8XY6
+* note: The reason we use the variable `shr_underflow` below instead of assigning
+* the flag direct to V{0xF} is that V{0xF} could also be used in the operation,
+* and thus, if the flag assignment occurs before the SHR operation is done,
+* the value stored in V{0xF} is lost and the operation's result is incorrect.
 */
 enum Snek8ExecutionOutput
 snek8_cpuSHR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
@@ -574,11 +593,12 @@ snek8_cpuSHR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     }
     uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     uint8_t y = snek8_opcodeGetNibble(opcode, 1);
+    uint8_t shr_underflow = cpu->registers[x] & 0x1;
     if (cpu->implm_flags & SNEK8_IMPLM_MODE_SHIFTS_USE_VY){
         cpu->registers[x] = cpu->registers[y];
     }
-    cpu->registers[0xF] = cpu->registers[x] & 0x1;
     cpu->registers[x] >>= 1;
+    cpu->registers[0xF] = shr_underflow;
     code[8] = _snek8_its(x);
     code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
@@ -587,6 +607,10 @@ snek8_cpuSHR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
 /*
 * SHL V{0xX}, V{0xY}.
 * 0x8XYE
+* note: The reason we use the variable `shl_overflow` below instead of assigning
+* the flag direct to V{0xF} is that V{0xF} could also be used in the operation,
+* and thus, if the flag assignment occurs before the SHR operation is done,
+* the value stored in V{0xF} is lost and the operation's result is incorrect.
 */
 enum Snek8ExecutionOutput
 snek8_cpuSHL_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
@@ -595,11 +619,12 @@ snek8_cpuSHL_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code){
     }
     uint8_t x = snek8_opcodeGetNibble(opcode, 2);
     uint8_t y = snek8_opcodeGetNibble(opcode, 1);
+    uint8_t shl_overflow = (cpu->registers[x] & 0x80) >> 7u;
     if (cpu->implm_flags & SNEK8_IMPLM_MODE_SHIFTS_USE_VY){
             cpu->registers[x] = cpu->registers[y];
     }
-    cpu->registers[0xF] = (cpu->registers[x] & 0x80) >> 7u;
     cpu->registers[x] <<= 1;
+    cpu->registers[0xF] = shl_overflow;
     code[8] = _snek8_its(x);
     code[16] = _snek8_its(y);
     return SNEK8_EXECOUT_SUCCESS;
@@ -633,7 +658,7 @@ snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code){
     }
     uint16_t addr = snek8_opcodeGetAddr(opcode);
     uint8_t x = 0;
-    if (cpu->implm_flags & SNEK8_IMPLM_MODE_BNNN_USE_VX){
+    if (cpu->implm_flags & SNEK8_IMPLM_MODE_BNNN_USES_VX){
         x = snek8_opcodeGetNibble(opcode, x);
     }
     cpu->pc = addr + cpu->registers[x];
@@ -874,7 +899,7 @@ snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (cpu->ir + x > SNEK8_MEM_ADDR_RAM_END){
         return SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS;
     }
-    if (cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGE_I){
+    if (cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGES_I){
         for (uint8_t i = 0; i <= x; i++){
             cpu->memory[cpu->ir + i] = cpu->registers[i];
             cpu->ir++;
@@ -901,7 +926,7 @@ snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, uint16_t opcode, char* code){
     if (cpu->ir + x > SNEK8_MEM_ADDR_RAM_END){
         return SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS;
     }
-    if (cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGE_I){
+    if (cpu->implm_flags & SNEK8_IMPLM_MODE_FX_CHANGES_I){
         for (uint8_t i=0; i<=x; i++){
             cpu->registers[i] = cpu->memory[cpu->ir + i];
             cpu->ir++;

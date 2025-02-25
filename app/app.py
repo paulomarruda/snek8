@@ -180,9 +180,9 @@ class Snek8App(QApplication):
         self.snek8_main_win.addMenuItem("Options", "Save state", self.saveState)
         # Implementation
         self.snek8_main_win.addMenu("Implementation")
-        self.snek8_main_win.addCheckMenu('Implementation', "Shifts use VY", False, self.implmModeShifts)
-        self.snek8_main_win.addCheckMenu('Implementation', "BNNN uses VX", False, self.implmModeBNNN)
-        self.snek8_main_win.addCheckMenu('Implementation', "FX changes I", False, self.implmModeFX)
+        self.snek8_main_win.addCheckMenu('Implementation', "Shifts use VY", self.implmModeShifts)
+        self.snek8_main_win.addCheckMenu('Implementation', "BNNN uses VX", self.implmModeBNNN)
+        self.snek8_main_win.addCheckMenu('Implementation', "FX changes I", self.implmModeFX)
         # Help Menu
         self.snek8_main_win.addMenu("Help")
         self.snek8_main_win.addMenuItem("Help", "Key mappings", self.showKeyBoardMap)
@@ -239,27 +239,27 @@ class Snek8App(QApplication):
 
     def implmModeShifts(self) -> None:
         if self.snek8_main_win.checkable_actions['Shifts use VY'].isChecked():
-            self.snek8_emulator.turnFlagsOff(snek8core.IMPL_MODE_SHIFTS_USE_VY)
-            self.snek8_main_win.checkable_actions['Shifts use VY'].setChecked(False)
-        else:
             self.snek8_emulator.turnFlagsOn(snek8core.IMPL_MODE_SHIFTS_USE_VY)
             self.snek8_main_win.checkable_actions['Shifts use VY'].setChecked(True)
+        else:
+            self.snek8_emulator.turnFlagsOff(snek8core.IMPL_MODE_SHIFTS_USE_VY)
+            self.snek8_main_win.checkable_actions['Shifts use VY'].setChecked(False)
 
     def implmModeBNNN(self) -> None:
         if self.snek8_main_win.checkable_actions['BNNN uses VX'].isChecked():
-            self.snek8_emulator.turnFlagsOff(snek8core.IMPL_MODE_SHIFTS_USE_VY)
-            self.snek8_main_win.checkable_actions['BNNN uses VX'].setChecked(False)
-        else:
-            self.snek8_emulator.turnFlagsOn(snek8core.IMPL_MODE_SHIFTS_USE_VY)
+            self.snek8_emulator.turnFlagsOn(snek8core.IMPL_MODE_BNNN_USES_VX)
             self.snek8_main_win.checkable_actions['BNNN uses VX'].setChecked(True)
+        else:
+            self.snek8_emulator.turnFlagsOff(snek8core.IMPL_MODE_BNNN_USES_VX)
+            self.snek8_main_win.checkable_actions['BNNN uses VX'].setChecked(False)
 
     def implmModeFX(self) -> None:
         if self.snek8_main_win.checkable_actions['FX changes I'].isChecked():
-            self.snek8_emulator.turnFlagsOff(snek8core.IMPL_MODE_SHIFTS_USE_VY)
-            self.snek8_main_win.checkable_actions['FX changes I'].setChecked(False)
-        else:
-            self.snek8_emulator.turnFlagsOn(snek8core.IMPL_MODE_SHIFTS_USE_VY)
+            self.snek8_emulator.turnFlagsOn(snek8core.IMPL_MODE_FX_CHANGES_I)
             self.snek8_main_win.checkable_actions['FX changes I'].setChecked(True)
+        else:
+            self.snek8_emulator.turnFlagsOff(snek8core.IMPL_MODE_FX_CHANGES_I)
+            self.snek8_main_win.checkable_actions['FX changes I'].setChecked(False)
 
     def emulate(self) -> None:
         if self.is_paused or (not self.snek8_emulator.is_running):

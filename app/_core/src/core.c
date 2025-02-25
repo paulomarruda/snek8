@@ -422,6 +422,7 @@ snek8_emulatorTurnFlagsOn(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
     CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags |= ((uint8_t) flags);
+    printf("flags: %08b\n", CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags);
     Py_RETURN_NONE;
 }
 
@@ -453,6 +454,7 @@ snek8_emulatorTurnFlagsOff(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
     CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags ^= ((uint8_t) flags);
+    printf("flags: %08b\n", CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags);
     Py_RETURN_NONE;
 }
 
@@ -835,8 +837,8 @@ PyInit_core(void){
     PyModule_AddIntConstant(module, "MEM_ADDR_PROGRM_START", SNEK8_MEM_ADDR_PROG_START);
     PyModule_AddIntConstant(module, "MEM_ADDR_FONTSET_START", SNEK8_MEM_ADDR_FONTSET_START);
     PyModule_AddIntConstant(module, "IMPL_MODE_SHIFTS_USE_VY", SNEK8_IMPLM_MODE_SHIFTS_USE_VY);
-    PyModule_AddIntConstant(module, "IMPL_MODE_BNNN_USE_VX", SNEK8_IMPLM_MODE_BNNN_USE_VX);
-    PyModule_AddIntConstant(module, "IMPL_MODE_FX_CHANGE_I", SNEK8_IMPLM_MODE_FX_CHANGE_I);
+    PyModule_AddIntConstant(module, "IMPL_MODE_BNNN_USES_VX", SNEK8_IMPLM_MODE_BNNN_USES_VX);
+    PyModule_AddIntConstant(module, "IMPL_MODE_FX_CHANGES_I", SNEK8_IMPLM_MODE_FX_CHANGES_I);
     return module;
 }
 

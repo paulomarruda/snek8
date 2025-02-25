@@ -101,8 +101,7 @@ class Snek8MainWindow(QMainWindow):
             action.triggered.connect(event_fun)
             self.win_menus[menu_name].addAction(action)
 
-    def addCheckMenu(self, menu_name: str, menu_item_name: str, is_checked: bool,
-                     event_fun: Callable) -> None:
+    def addCheckMenu(self, menu_name: str, menu_item_name: str, event_fun: Callable) -> None:
         """
         Add a checkable option to a given menu.
         """
@@ -112,7 +111,7 @@ class Snek8MainWindow(QMainWindow):
                 parent = self,
                 checkable = True
             )
-            menu_item.setChecked(is_checked)
+            menu_item.setChecked(False)
             self.checkable_actions[menu_item_name] = menu_item
             menu_item.triggered.connect(event_fun)
             self.win_menus[menu_name].addAction(menu_item)

@@ -203,14 +203,14 @@
 * @def SNEK8_IMPLM_MODE_BNNN_USE_VX
 * @brief A flag that will tell the interpreter to use V{0xX} in 0xB--- instructions.
 */
-#define SNEK8_IMPLM_MODE_BNNN_USE_VX     2
+#define SNEK8_IMPLM_MODE_BNNN_USES_VX     2
 
 /**
 * @def SNEK8_IMPLM_MODE_FX_CHANGE_I
 * @brief A flag that will tell the interpreter to increment I in the 0xFX55 and 0xFX65
 *        instructions.
 */
-#define SNEK8_IMPLM_MODE_FX_CHANGE_I     4
+#define SNEK8_IMPLM_MODE_FX_CHANGES_I     4
 
 /**
 * @def UNUSED(x)

@@ -33,9 +33,8 @@ if os.name != 'nt':
             '-Werror',
             '-Wfloat-equal',
             '-Wpedantic',
-            # '-O3',
-            '-g3',
-            '-ggdb'
+            '-O3',
+            '-std=c2x',
         ]
     )
 else:
@@ -54,6 +53,7 @@ else:
             '/Wfloat-equal',
             '/Wpedantic',
             '/O3',
+            '/std=c2x'
         ],
     )
 

@@ -14,6 +14,7 @@ pip install -r requirements.txt
 python setup.py install
 python app/app.py
 ```
+Since Snek8 is still in development, we recomend you to use a virtual environment.
 ## Usage
 You can either navigate the GUI menu or use the hotkeys:
 

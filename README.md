@@ -15,7 +15,7 @@ python setup.py install
 python app/app.py
 ```
 ## Usage
-You can either navigate the GUI menu or use the hot keys:
+You can either navigate the GUI menu or use the hotkeys:
 
 | Key     |                  Action|
 |---------|------------------------|
@@ -24,11 +24,11 @@ You can either navigate the GUI menu or use the hot keys:
 | `l`     | Reset and load new ROM | 
 
 ### Implementations
-Different dialects of the CHIP-8 language exists, see [Tobias V. Langhoff' Tutorial](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/). To account for these differences, the `Implementation` menu allows the user to activate flags that modifies the instructions' execution.
+Different dialects of the CHIP-8 language exist, see [Tobias V. Langhoff' Tutorial](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/). To account for these differences, the `Implementation` menu allows users to activate flags that modify the instructions' execution.
 
 | Flag | Instruction Affected | Explanation |
 |------|----------------------|-------------|
-| `Shifts Use VY` | `SHR Vx, Vy` and `SHL Vx, Vy` | Some interpreters load the content of `Vy` into `Vy` before performing the bitwise shifts.|
+| `Shifts Use VY` | `SHR Vx, Vy` and `SHL Vx, Vy` | Some interpreters load the content of `Vy` into `Vx` before performing the bitwise shifts.|
 | `BNNN Uses VX`  | `JP V0, addr` | Some interpreters decode this instruction as `I := V0 + 0x0NNN` (opcode `0xBNNN`) and others as `I := VX + 0x0XNN` (opcode `0xBXNN`).|
 | `FX uses I` | `LD [I], Vx` and `LD Vx, [I]` | Some interpreters increment the `index register` each time the information is exchanged between memory and the registers.|
 
@@ -42,7 +42,7 @@ The COSMAC-VIP had a hexadecimal keypad as follows:
 | `7` | `8` | `9` | `E` |
 | `A` | `0` | `B` | `F` |
 
-Our emulator maps this keypad to a the modern computer keyboard as follows:
+Our emulator maps this keypad to a modern computer keyboard as follows:
 
 | `1` | `2` | `3` | `4` |
 |-----|-----|-----|-----|
@@ -52,7 +52,7 @@ Our emulator maps this keypad to a the modern computer keyboard as follows:
 
 
 ## ROMs
-We do not include any ROM file here, but you can encounter CHIP8 ROMs all over internet. We list some repositiories:
+We do not include any ROM files here, but you can encounter CHIP8 ROMs all over the internet. We list some repositories:
 
 - [https://github.com/jamesmcm/chip8go](https://github.com/jamesmcm/chip8go)
 - [https://johnearnest.github.io/chip8Archive/](https://johnearnest.github.io/chip8Archive/)
@@ -68,5 +68,5 @@ We do not include any ROM file here, but you can encounter CHIP8 ROMs all over i
 |[Corax+ opcode test](https://github.com/Timendus/chip8-test-suite/raw/main/bin/3-corax+.ch8)| :heavy_check_mark: | |
 
 ## TO-DOs
- - Make an executable avaiable for Windows and Mac.
- - Implement popup windows to indicate execution errors (e.g `NOP`).
+ - Make an executable available for Windows and Mac.
+ - Implement popup windows to indicate execution errors (e.g. `NOP`).

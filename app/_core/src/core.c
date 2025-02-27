@@ -422,7 +422,6 @@ snek8_emulatorTurnFlagsOn(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
     CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags |= ((uint8_t) flags);
-    printf("flags: %08b\n", CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags);
     Py_RETURN_NONE;
 }
 
@@ -454,7 +453,6 @@ snek8_emulatorTurnFlagsOff(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
     CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags ^= ((uint8_t) flags);
-    printf("flags: %08b\n", CAST_PTR(Snek8Emulator, self)->ob_cpu.implm_flags);
     Py_RETURN_NONE;
 }
 
@@ -609,7 +607,7 @@ snek8_emulatorEmulationStep(PyObject* self, PyObject* args){
     Snek8Instruction instruc;
     enum Snek8ExecutionOutput out = snek8_cpuStep(&CAST_PTR(Snek8Emulator, self)->ob_cpu,
                                                  &instruc);
-    printf("%s\n", instruc.code);
+    // printf("%s\n", instruc.code);
     if (out != SNEK8_EXECOUT_SUCCESS){
         CAST_PTR(Snek8Emulator, self)->ob_is_running = false;
     }

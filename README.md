@@ -1,31 +1,40 @@
 # Snek8
-Snek8 is a [CHIP8](https://en.wikipedia.org/wiki/CHIP-8) emulator writen in C/Python. Snek8 aims to ship an easy to use emulator with a comprehensive GUI. Most of CHIP8 emulators rely heavely on the command line, which can frustrate users that are not used to it; hence, this project aims to chip an executable with everything the user needs to play (except the ROMs).
+Snek8 is a [CHIP8](https://en.wikipedia.org/wiki/CHIP-8) emulator writen in C/Python.
 
 ## License
 Snek8 is licensed under the [GNU Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
 ## Executables and Installation
-The link for the executables can be found on the project's [page](https://paulomarruda.github.io/snek8)
+The exacutables are not yet avaiable.
 
-If you prefer, you can build the project from source:
-
-### Linux
-
-### Windows
-
-### Mac
+For installation from source and running, execute the following:
 
 ```bash
 pip install -r requirements.txt
 python setup.py install
+python app/app.py
 ```
 ## Usage
+You can either navigate the GUI menu or use the hot keys:
 
-### Keys
+| Key     |                  Action|
+------------------------------------
+| `p`     | Pause                  |
+| `ESC`   | Quit                   |
+| `l`     | Reset and load new ROM | 
+
+### Implementations
+Different dialects of the CHIP-8 language exists, see [Tobias V. Langhoff' Tutorial](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/). To account for these differences, the `Implementation` menu allows the user to activate flags that modifies the instructions' execution.
+
+| Flag | Instruction Affected | Explanation |
+---------------------------------------------
+| `Shifts Use VY` | `SHR Vx, Vy` and `SHL Vx, Vy` | Some interpreters load the content of `Vy` into `Vy` before performing the bitwise shifts.|
+| `BNNN Uses VX`  | `JP V0, addr` | Some interpreters decode this instruction as `I := V0 + 0x0NNN` (opcode `0xBNNN`) and others as `I := VX + 0x0XNN` (opcode `0xBXNN`).|
+| `FX uses I` | `LD [I], Vx` and `LD Vx, [I]` | Some interpreters increment the `index register` each time the information is exchanged between memory and the registers.|
+
+### CHIP-8 Keys
 
 The COSMAC-VIP had a hexadecimal keypad as follows:
-
-
 
 | `1` | `2` | `3` | `C` |
 |-----|-----|-----|-----|
@@ -33,10 +42,7 @@ The COSMAC-VIP had a hexadecimal keypad as follows:
 | `7` | `8` | `9` | `E` |
 | `A` | `0` | `B` | `F` |
 
-
 Our emulator maps this keypad to a the modern computer keyboard as follows:
-
-
 
 | `1` | `2` | `3` | `4` |
 |-----|-----|-----|-----|
@@ -62,3 +68,5 @@ We do not include any ROM file here, but you can encounter CHIP8 ROMs all over i
 |[Corax+ opcode test](https://github.com/Timendus/chip8-test-suite/raw/main/bin/3-corax+.ch8)| :heavy_check_mark: | |
 
 ## TO-DOs
+ - Make an executable avaiable for Windows and Mac.
+ - Implement popup windows to indicate execution errors (e.g `NOP`).

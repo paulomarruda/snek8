@@ -191,7 +191,7 @@ class Snek8App(QApplication):
     def showError(self, err_msg: str) -> None:
         pass
 
-    def handleSound(self, sound_timer: int) -> None:
+    def handleSound(self) -> None:
         pass
 
     def setStatusBarPaused(self) -> None:
@@ -278,7 +278,7 @@ class Snek8App(QApplication):
                 pass
             case _:
                 pass
-        self.handleSound(self.snek8_emulator.getST())
+        self.handleSound()
         self.snek8_screen.updateScreen(self.snek8_emulator.getGraphics())
 
     def resetEmulation(self) -> None:

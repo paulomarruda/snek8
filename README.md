@@ -18,7 +18,7 @@ python app/app.py
 You can either navigate the GUI menu or use the hot keys:
 
 | Key     |                  Action|
-------------------------------------
+|---------|------------------------|
 | `p`     | Pause                  |
 | `ESC`   | Quit                   |
 | `l`     | Reset and load new ROM | 
@@ -27,7 +27,7 @@ You can either navigate the GUI menu or use the hot keys:
 Different dialects of the CHIP-8 language exists, see [Tobias V. Langhoff' Tutorial](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/). To account for these differences, the `Implementation` menu allows the user to activate flags that modifies the instructions' execution.
 
 | Flag | Instruction Affected | Explanation |
----------------------------------------------
+|------|----------------------|-------------|
 | `Shifts Use VY` | `SHR Vx, Vy` and `SHL Vx, Vy` | Some interpreters load the content of `Vy` into `Vy` before performing the bitwise shifts.|
 | `BNNN Uses VX`  | `JP V0, addr` | Some interpreters decode this instruction as `I := V0 + 0x0NNN` (opcode `0xBNNN`) and others as `I := VX + 0x0XNN` (opcode `0xBXNN`).|
 | `FX uses I` | `LD [I], Vx` and `LD Vx, [I]` | Some interpreters increment the `index register` each time the information is exchanged between memory and the registers.|

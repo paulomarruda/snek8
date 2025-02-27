@@ -1,3 +1,4 @@
+PARENT_DIR: str = 'snek8'
 """
 @file app.py
 @author Paulo Arruda
@@ -13,8 +14,8 @@ from typing import List, Dict, Callable
 from PyQt6.QtWidgets import QApplication, QFileDialog
 from PyQt6.QtGui import QIcon, QGuiApplication
 from PyQt6.QtCore import Qt, QBasicTimer, QTimer
+from PyQt6.QtMultimedia import QSoundEffect
 
-PARENT_DIR: str = 'snek8'
 
 class Snek8App(QApplication):
     """
@@ -144,7 +145,8 @@ class Snek8App(QApplication):
         self.initUI()
         self.snek8_main_win.show()
         self.timer.timeout.connect(self.emulate)
-        self.timer.start(1000 // self.fps)
+        self.timer.start(1)
+        # self.emulate()
 
     def initUI(self) -> None:
         self.snek8_main_win = Snek8MainWindow("Snek8 - Chip8 Emulator",
@@ -154,7 +156,7 @@ class Snek8App(QApplication):
         self.snek8_main_win.centerWindowOnScreen(QGuiApplication.primaryScreen().geometry().width(),
                                            QGuiApplication.primaryScreen().geometry().height())
         self.snek8_main_win.setKeys(self.CPU_KEY_MAP, self.APP_KEY_MAP)
-        self.snek8_screen = Snek8Screen(self.snek8_main_win)
+        self.snek8_screen = Snek8Screen(self.snek8_main_win, self.snek8_emulator.isPixelActive)
         self.snek8_main_win.setCentralWidget(self.snek8_screen)
         self.setStatusBarDefualt()
         self.initMenus()
@@ -191,8 +193,9 @@ class Snek8App(QApplication):
     def showError(self, err_msg: str) -> None:
         pass
 
-    def handleSound(self) -> None:
+    def handleSound(self, soundtimer: int) -> None:
         pass
+        # QSoundEffect()
 
     def setStatusBarPaused(self) -> None:
         self.snek8_main_win.status_bar.setText(self.STATUS_BAR_PAUSED)
@@ -278,11 +281,10 @@ class Snek8App(QApplication):
                 pass
             case _:
                 pass
-        self.handleSound()
-        self.snek8_screen.updateScreen(self.snek8_emulator.getGraphics())
+        self.handleSound(self.snek8_emulator.getST())
+        self.snek8_screen.update()
 
     def resetEmulation(self) -> None:
-        self.snek8_screen.clearScreen()
         del(self.snek8_emulator)
         impl_flags = 0
         if self.snek8_impl_shifts_use_vy:
@@ -292,6 +294,7 @@ class Snek8App(QApplication):
         if self.snek8_impl_fx_changes_ir:
             impl_flags |= (1 << 2)
         self.snek8_emulator = snek8core.Snek8Emulator(implm_flags = impl_flags)
+        self.snek8_screen.update()
         self.setStatusBarDefualt()
 
     def saveState(self) -> None:

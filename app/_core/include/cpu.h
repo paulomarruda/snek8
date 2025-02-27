@@ -870,6 +870,13 @@ snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
 enum Snek8ExecutionOutput
 snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 
+static inline uint8_t*
+snek8_cpuGetPixel(Snek8CPU* cpu, size_t x, size_t y){
+    size_t idx_x = x & 63;
+    size_t idx_y = y & 31;
+    return &cpu->graphics[idx_y * SNEK8_GRAPHICS_WIDTH + idx_x];
+}
+
 /**
 * @brief Draw a sprite of size N at screen position V{0xX}, V{0xY}.
 *

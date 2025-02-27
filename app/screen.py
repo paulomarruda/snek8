@@ -5,7 +5,7 @@
 @brief: Implementation of the emulator' display.
 """
 
-from typing import List, Annotated
+from typing import List, Annotated, Callable
 from snek8.core import SIZE_GRAPHICS_WIDTH, SIZE_GRAPHICS_HEIGHT, SIZE_GRAPHICS
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QWidget, QFrame
@@ -33,10 +33,12 @@ class Snek8Screen(QFrame):
         in the app as a SIZE_PIXEL x SIZE_PIXEL square.
     """
     snek8_screen: Annotated[List[int], SIZE_GRAPHICS] = NotImplemented
+    snek8_lookup_fun: Callable[[int, int], bool]
 
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(self, parent: QWidget, lookup_fun: Callable[[int, int], bool]) -> None:
         super().__init__(parent)
-        self.clearScreen()
+        self.snek8_lookup_fun = lookup_fun
+        # self.clearScreen()
 
     @property
     def COLOUR_BCKG(self) -> QColor:
@@ -50,21 +52,21 @@ class Snek8Screen(QFrame):
     def SIZE_PIXEL(self) -> int:
         return 10
 
-    def clearScreen(self) -> None:
-        """
-        Clear the app screen.
+    # def clearScreen(self) -> None:
+    #     """
+    #     Clear the app screen.
 
-        This function does not change the emulator screen.
-        """
-        self.snek8_screen = [False for _ in range(SIZE_GRAPHICS)]
-        self.update()
+    #     This function does not change the emulator screen.
+    #     """
+    #     self.snek8_screen = [False for _ in range(SIZE_GRAPHICS)]
+    #     self.update()
 
-    def updateScreen(self, screen: Annotated[List[int], SIZE_GRAPHICS]) -> None:
-        """
-        Set the array representation of the CHIP8's pixels.
-        """
-        self.snek8_screen = screen
-        self.update()
+    # def updateScreen(self, screen: Annotated[List[int], SIZE_GRAPHICS]) -> None:
+    #     """
+    #     Set the array representation of the CHIP8's pixels.
+    #     """
+    #     self.snek8_screen = screen
+    #     self.update()
 
     def paintEvent(self, a0: QPaintEvent | None) -> None:
         """
@@ -75,7 +77,7 @@ class Snek8Screen(QFrame):
         painter.eraseRect(0, 0, SIZE_GRAPHICS_WIDTH, SIZE_GRAPHICS_HEIGHT)
         for y in range(SIZE_GRAPHICS_HEIGHT):
             for x in range(SIZE_GRAPHICS_WIDTH):
-                if self.snek8_screen[y * SIZE_GRAPHICS_WIDTH + x]:
+                if self.snek8_lookup_fun(x, y):
                     colour = self.COLOUR_FRGR
                 else:
                     colour = self.COLOUR_BCKG
@@ -84,3 +86,15 @@ class Snek8Screen(QFrame):
                                   self.SIZE_PIXEL,
                                   self.SIZE_PIXEL,
                                   colour)
+
+
+                
+                # if self.snek8_screen[y * SIZE_GRAPHICS_WIDTH + x]:
+                #     colour = self.COLOUR_FRGR
+                # else:
+                #     colour = self.COLOUR_BCKG
+                # painter.fillRect(x * self.SIZE_PIXEL,
+                #                   y * self.SIZE_PIXEL,
+                #                   self.SIZE_PIXEL,
+                #                   self.SIZE_PIXEL,
+                #                   colour)

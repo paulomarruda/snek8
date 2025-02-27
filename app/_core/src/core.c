@@ -343,6 +343,42 @@ PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_GET_GRAPHICS,
 );
 
 static PyObject*
+snek8_emulatorIsPixelActive(PyObject* self, PyObject* args, PyObject* kwargs){
+    int pos_x;
+    int pos_y;
+    char* kw_list[] = {
+        "pox_x",
+        "pos_y",
+        NULL,
+    };
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ii", kw_list, &pos_x, &pos_y)){
+        return NULL;
+    }
+    if (*snek8_cpuGetPixel(&CAST_PTR(Snek8Emulator, self)->ob_cpu, pos_x, pos_y)){
+        Py_RETURN_TRUE;
+    }else{
+        Py_RETURN_FALSE;
+    }
+}
+
+PyDoc_STRVAR(SNEK8_DOC_STR_SNEK8_EMULATOR_IS_PIXEL_ACT,
+             "isPixelActive(pos_x: int, pos_y: int) -> bool\n\n"
+             "Retrieve whether the pixel at (pos_x, pos_y) is active.\n"
+             "An active (True) pixel is a white pixel and an innactive (False)\n"
+             "is a black pixel."
+             "Attributes\n"
+             "----------\n"
+             "pos_x: int\n"
+             "\tThe x-coordinate. 0 <= pos_x < 64\n"
+             "pos_y: int\n"
+             "\tThe y-coordinate. 0 <= pos_y < 32\n"
+             "Returns\n"
+             "-------\n"
+             "bool\n"
+             "\tThe current value of the requested pixel.\n"
+);
+
+static PyObject*
 snek8_emulatorGetStack(PyObject* self, PyObject* args){
     UNUSED(args);
     PyObject* stack_list = PyList_New(SNEK8_SIZE_STACK);
@@ -608,6 +644,7 @@ snek8_emulatorEmulationStep(PyObject* self, PyObject* args){
     enum Snek8ExecutionOutput out = snek8_cpuStep(&CAST_PTR(Snek8Emulator, self)->ob_cpu,
                                                  &instruc);
     // printf("%s\n", instruc.code);
+    // TO-DO: DEAL WITH EXEC ERRORS.
     if (out != SNEK8_EXECOUT_SUCCESS){
         CAST_PTR(Snek8Emulator, self)->ob_is_running = false;
     }
@@ -668,6 +705,12 @@ static struct PyMethodDef snek8_emulator_methods[] = {
         .ml_meth = snek8_emulatorGetGraphics,
         .ml_flags = METH_NOARGS,
         .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_GET_GRAPHICS,
+    },
+    {
+        .ml_name = "isPixelActive",
+        .ml_meth = (PyCFunction) snek8_emulatorIsPixelActive,
+        .ml_flags = METH_VARARGS | METH_KEYWORDS,
+        .ml_doc = SNEK8_DOC_STR_SNEK8_EMULATOR_IS_PIXEL_ACT,
     },
     {
         .ml_name = "getStack",

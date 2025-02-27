@@ -683,12 +683,6 @@ snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code){
     return SNEK8_EXECOUT_SUCCESS;
 }
 
-static inline uint8_t*
-_snek8_cpuGetPixel(Snek8CPU* cpu, size_t x, size_t y){
-    size_t idx_x = x & 63;
-    size_t idx_y = y & 31;
-    return &cpu->graphics[idx_y * SNEK8_GRAPHICS_WIDTH + idx_x];
-}
 
 /*
 * DRW V{0xX}, V{0xY}, 0xN
@@ -712,7 +706,7 @@ snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, uint16_t opcode, char* code){
         uint8_t byte = cpu->memory[cpu->ir + col];
         for (uint8_t row = 0; row < 8; row++){
             uint8_t bit = byte & (0x80u >> row);
-            uint8_t* pixel_ptr = _snek8_cpuGetPixel(cpu, px + row, py + col);
+            uint8_t* pixel_ptr = snek8_cpuGetPixel(cpu, px + row, py + col);
             *pixel_ptr ^= bit;
             if (bit && *pixel_ptr == 0){
                 cpu->registers[0xF] = 1;

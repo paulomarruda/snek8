@@ -1,5 +1,5 @@
 # Snek8
-Snek8 is a [CHIP8](https://en.wikipedia.org/wiki/CHIP-8) emulator writen in C/Python.
+Snek8 is a [CHIP8](https://en.wikipedia.org/wiki/CHIP-8) emulator writen in C/Python with [PyQT6](https://doc.qt.io/qtforpython-6/).
 
 ## License
 Snek8 is licensed under the [GNU Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).

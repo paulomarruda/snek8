@@ -115,7 +115,7 @@ snek8_stackInit(Snek8Stack *stack){
         return SNEK8_EXECOUT_EMPTY_STRUCT;
     }
     stack->sp = 0;
-    memset(stack->buffer, 0, SNEK8_SIZE_STACK * SIZE_U16);
+    (void) memset(stack->buffer, 0, SNEK8_SIZE_STACK * SIZE_U16);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
@@ -173,10 +173,10 @@ snek8_cpuInit(Snek8CPU* cpu, uint8_t implm_flags){
     cpu->dt = 0;
     cpu->sp = 0;
     (void) snek8_stackInit(&cpu->stack);
-    memset(&cpu->registers, 0, SNEK8_SIZE_REGISTERS * SIZE_U8);
-    memset(&cpu->memory, 0, SNEK8_SIZE_RAM * SIZE_U8);
-    memset(&cpu->graphics, 0, SNEK8_SIZE_GRAPHICS * SIZE_U8);
-    memcpy(cpu->memory + SNEK8_MEM_ADDR_FONTSET_START, fontset, SNEK8_SIZE_FONTSET_PIXELS * SIZE_U8);
+    (void) memset(&cpu->registers, 0, SNEK8_SIZE_REGISTERS * SIZE_U8);
+    (void) memset(&cpu->memory, 0, SNEK8_SIZE_RAM * SIZE_U8);
+    (void) memset(&cpu->graphics, 0, SNEK8_SIZE_GRAPHICS * SIZE_U8);
+    (void) memcpy(cpu->memory + SNEK8_MEM_ADDR_FONTSET_START, fontset, SNEK8_SIZE_FONTSET_PIXELS * SIZE_U8);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
@@ -203,7 +203,7 @@ snek8_cpuLoadRom(Snek8CPU* cpu, const char* rom_file_path){
         fclose(rom_file);
         return SNEK8_EXECOUT_ROM_FILE_FAILED_TO_READ;
     }
-    fclose(rom_file);
+    (void) fclose(rom_file);
     return SNEK8_EXECOUT_SUCCESS;
 }
 
@@ -286,7 +286,7 @@ snek8_cpuCLS(Snek8CPU* cpu, uint16_t opcode, char* code){
     }
     UNUSED(opcode);
     UNUSED(code);
-    memset(&cpu->graphics, 0, SNEK8_SIZE_GRAPHICS * SIZE_U8);
+    (void) memset(&cpu->graphics, 0, SNEK8_SIZE_GRAPHICS * SIZE_U8);
     return SNEK8_EXECOUT_SUCCESS;
 }
 

@@ -126,7 +126,7 @@ snek8_emulatorInit(PyObject* self, PyObject* args, PyObject* kwargs){
         PyErr_Format(PyExc_ValueError, "Value %d is invalid for implementation.", implm_flags);
         return -1;
     }
-    snek8_cpuInit(&CAST_PTR(Snek8Emulator, self)->ob_cpu, (uint8_t) implm_flags);
+    (void) snek8_cpuInit(&CAST_PTR(Snek8Emulator, self)->ob_cpu, (uint8_t) implm_flags);
     return 0;
 }
 
@@ -845,41 +845,41 @@ PyInit_core(void){
     if (PyModule_AddObject(module, "Snek8Emulator", (PyObject*) &Snek8EmulatorType)){
         Py_DECREF(module);
     }
-    PyModule_AddIntConstant(module, "EXECOUT_SUCCESS",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_SUCCESS",
                             (long) SNEK8_EXECOUT_SUCCESS);
-    PyModule_AddIntConstant(module, "EXECOUT_INVALID_OPCODE",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_INVALID_OPCODE",
                             (long) SNEK8_EXECOUT_INVALID_OPCODE);
-    PyModule_AddIntConstant(module, "EXECOUT_STACK_EMPTY",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_STACK_EMPTY",
                             (long) SNEK8_EXECOUT_STACK_EMPTY);
-    PyModule_AddIntConstant(module, "EXECOUT_STACK_OVERFLOW",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_STACK_OVERFLOW",
                             (long) SNEK8_EXECOUT_STACK_OVERFLOW);
-    PyModule_AddIntConstant(module, "EXECOUT_MEM_ADDR_OUT_BOUNDS",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_MEM_ADDR_OUT_BOUNDS",
                             (long) SNEK8_EXECOUT_MEM_ADDR_OUT_OF_BOUNDS);
-    PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_NOT_FOUND",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_NOT_FOUND",
                             (long) SNEK8_EXECOUT_ROM_FILE_NOT_FOUND);
-    PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_FAILED_TO_OPEN",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_FAILED_TO_OPEN",
                             (long) SNEK8_EXECOUT_ROM_FILE_FAILED_TO_OPEN);
-    PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_FAILED_TO_READ",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_FAILED_TO_READ",
                             (long) SNEK8_EXECOUT_ROM_FILE_FAILED_TO_READ);
-    PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM",
                             (long) SNEK8_EXECOUT_ROM_FILE_EXCEEDS_MAX_MEM);
-    PyModule_AddIntConstant(module, "EXECOUT_EMPTY_STRUCT",
+    (void) PyModule_AddIntConstant(module, "EXECOUT_EMPTY_STRUCT",
                             (long) SNEK8_EXECOUT_EMPTY_STRUCT);
-    PyModule_AddIntConstant(module, "SIZE_KEYSET", SNEK8_SIZE_KEYSET);
-    PyModule_AddIntConstant(module, "SIZE_STACK", SNEK8_SIZE_STACK);
-    PyModule_AddIntConstant(module, "SIZE_REGISTERS", SNEK8_SIZE_REGISTERS);
-    PyModule_AddIntConstant(module, "SIZE_RAM", SNEK8_SIZE_RAM);
-    PyModule_AddIntConstant(module, "SIZE_MAX_ROM_FILE", SNEK8_SIZE_MAX_ROM_FILE);
-    PyModule_AddIntConstant(module, "SIZE_GRAPHICS_WIDTH", SNEK8_GRAPHICS_WIDTH);
-    PyModule_AddIntConstant(module, "SIZE_GRAPHICS_HEIGHT", SNEK8_GRAPHICS_HEIGTH);
-    PyModule_AddIntConstant(module, "SIZE_GRAPHICS", SNEK8_SIZE_GRAPHICS);
-    PyModule_AddIntConstant(module, "SIZE_FONTSET_PIXELS", SNEK8_SIZE_FONTSET_PIXELS);
-    PyModule_AddIntConstant(module, "SIZE_FONTSET_SPRITE", SNEK8_SIZE_FONTSET_PIXEL_PER_SPRITE);
-    PyModule_AddIntConstant(module, "MEM_ADDR_PROGRM_START", SNEK8_MEM_ADDR_PROG_START);
-    PyModule_AddIntConstant(module, "MEM_ADDR_FONTSET_START", SNEK8_MEM_ADDR_FONTSET_START);
-    PyModule_AddIntConstant(module, "IMPL_MODE_SHIFTS_USE_VY", SNEK8_IMPLM_MODE_SHIFTS_USE_VY);
-    PyModule_AddIntConstant(module, "IMPL_MODE_BNNN_USES_VX", SNEK8_IMPLM_MODE_BNNN_USES_VX);
-    PyModule_AddIntConstant(module, "IMPL_MODE_FX_CHANGES_I", SNEK8_IMPLM_MODE_FX_CHANGES_I);
+    (void) PyModule_AddIntConstant(module, "SIZE_KEYSET", SNEK8_SIZE_KEYSET);
+    (void) PyModule_AddIntConstant(module, "SIZE_STACK", SNEK8_SIZE_STACK);
+    (void) PyModule_AddIntConstant(module, "SIZE_REGISTERS", SNEK8_SIZE_REGISTERS);
+    (void) PyModule_AddIntConstant(module, "SIZE_RAM", SNEK8_SIZE_RAM);
+    (void) PyModule_AddIntConstant(module, "SIZE_MAX_ROM_FILE", SNEK8_SIZE_MAX_ROM_FILE);
+    (void) PyModule_AddIntConstant(module, "SIZE_GRAPHICS_WIDTH", SNEK8_GRAPHICS_WIDTH);
+    (void) PyModule_AddIntConstant(module, "SIZE_GRAPHICS_HEIGHT", SNEK8_GRAPHICS_HEIGTH);
+    (void) PyModule_AddIntConstant(module, "SIZE_GRAPHICS", SNEK8_SIZE_GRAPHICS);
+    (void) PyModule_AddIntConstant(module, "SIZE_FONTSET_PIXELS", SNEK8_SIZE_FONTSET_PIXELS);
+    (void) PyModule_AddIntConstant(module, "SIZE_FONTSET_SPRITE", SNEK8_SIZE_FONTSET_PIXEL_PER_SPRITE);
+    (void) PyModule_AddIntConstant(module, "MEM_ADDR_PROGRM_START", SNEK8_MEM_ADDR_PROG_START);
+    (void) PyModule_AddIntConstant(module, "MEM_ADDR_FONTSET_START", SNEK8_MEM_ADDR_FONTSET_START);
+    (void) PyModule_AddIntConstant(module, "IMPL_MODE_SHIFTS_USE_VY", SNEK8_IMPLM_MODE_SHIFTS_USE_VY);
+    (void) PyModule_AddIntConstant(module, "IMPL_MODE_BNNN_USES_VX", SNEK8_IMPLM_MODE_BNNN_USES_VX);
+    (void) PyModule_AddIntConstant(module, "IMPL_MODE_FX_CHANGES_I", SNEK8_IMPLM_MODE_FX_CHANGES_I);
     return module;
 }
 

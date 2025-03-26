@@ -213,11 +213,10 @@
 #define SNEK8_IMPLM_MODE_FX_CHANGES_I     4
 
 /**
-* @def UNUSED(x)
-* @brief Ignore an object.
-* @param `x` The object to be ignored.
+* @def UNUSED
+* @brief Ignore an object or return value.
 */
-#define UNUSED(x) ((void) x)
+#define UNUSED (void)
 
 /**
 * @def CAST_PTR(type, ptr)
@@ -337,10 +336,9 @@ snek8_stackInit(Snek8Stack* stack);
 * @param[in, out] `stack`
 * @param[in, out] `pc` The CPU's program counter.
 * @param[in] `opcode`.
-* @param[in] `code` The string representation of the CALL instruction.
 */
 enum Snek8ExecutionOutput
-snek8_stackPush(Snek8Stack* stack, uint16_t* pc, uint16_t opcode, char* code);
+snek8_stackPush(Snek8Stack* stack, uint16_t* pc, uint16_t opcode);
 
 /**
 * @brief Init a stack with the default values.
@@ -434,7 +432,7 @@ snek8_cpuGetKeyVal(Snek8CPU cpu, size_t key){
 /*
 * @brief Function pointer representation the action of a given instruction.
 */
-typedef enum Snek8ExecutionOutput (*Snek8InstructionExec)(Snek8CPU* cpu, uint16_t opcode, char* code);
+typedef enum Snek8ExecutionOutput (*Snek8InstructionExec)(Snek8CPU* cpu, uint16_t opcode);
 
 /*
 * @brief Representation of a Chip8's instruction.
@@ -475,13 +473,10 @@ snek8_cpuStep(Snek8CPU* cpu, Snek8Instruction* instruction);
 *
 * Code: NOP.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
 * @return Always returns the error code `SNEK8_EXECOUT_INVALID_OPCODE`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuExecutionError(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuExecutionError(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Clear the Chip8's screen.
@@ -489,15 +484,10 @@ snek8_cpuExecutionError(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x00E0.
 * Code: CLS.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always return the code `SNEK8_EXECOUT_SUCCESS`
 */
 enum Snek8ExecutionOutput
-snek8_cpuCLS(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuCLS(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Return from a subroutine.
@@ -508,15 +498,11 @@ snek8_cpuCLS(Snek8CPU* cpu, uint16_t opcode, char* code);
 * The interpreter decrements the stack pointer and sets the PC to the top of the
 * stack.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty, or `SNEK8_EXECOUT_EMPTY_STACK` if the stack is empty.
+* @note This function will return SNEK8_EXECOUT_EMPTY_STACK` if the stack is empty.
 */
 enum Snek8ExecutionOutput
-snek8_cpuRET(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuRET(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Call a subroutine.
@@ -527,15 +513,11 @@ snek8_cpuRET(Snek8CPU* cpu, uint16_t opcode, char* code);
 * The interpreter increments the stack pointer and sets the top of the stack to the address
 * held in the PC; the PC is then set to the address 0x0NNN.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
 * @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty, or `SNEK8_EXECOUT_STACK_OVERFLOW` if the stack is full.
+* @note This function will return `SNEK8_EXECOUT_STACK_OVERFLOW` if the stack is full.
 */
 enum Snek8ExecutionOutput
-snek8_cpuCALL(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuCALL(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Jump to the given address.
@@ -545,15 +527,10 @@ snek8_cpuCALL(Snek8CPU* cpu, uint16_t opcode, char* code);
 *
 * The interpreter sets the PC to 0x0NNN.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuJMP_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuJMP_ADDR(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Compares a register's value to a given byte for equality.
@@ -564,15 +541,10 @@ snek8_cpuJMP_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
 * The interpreter compares the value held in the register Vx to the byte 0xKK. If they
 * are equal, the interpreter increments the PC.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Compares a register's value to a given byte for inequality.
@@ -583,15 +555,10 @@ snek8_cpuSE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 * The interpreter compares the value held in the register Vx to the byte KK. If they
 * are not equal, the interpreter increments the PC.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSNE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSNE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Set the value of the register VX to the given byte.
@@ -599,15 +566,10 @@ snek8_cpuSNE_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x6XKK.
 * Code: Code: LD V{0xX}, 0xKK.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Add the given byte to the value held in the given register.
@@ -617,15 +579,10 @@ snek8_cpuLD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 *
 * @note Overflows are not considered.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuADD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuADD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Compares the values held in the two given registers for equality.
@@ -636,15 +593,10 @@ snek8_cpuADD_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
 * The interpreter compares the values held in the registers VX and VY. If they are
 * equal, the interpreter increments the PC.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSE_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSE_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Compares the values held in the two given registers for inequality.
@@ -655,15 +607,10 @@ snek8_cpuSE_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * The interpreter compares the values held in the registers VX and VY. If they are not
 * equal, the interpreter increments the PC.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSNE_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSNE_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Sets the value of register V{0xY} to the value held at the register V{0xX}.
@@ -671,15 +618,10 @@ snek8_cpuSNE_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x8XY0.
 * Code: LD V{0xX}, V{0xY}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} OR V{0xY}.
@@ -687,15 +629,10 @@ snek8_cpuLD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x8XY1.
 * Code: OR V{0xX}, V{0xY}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuOR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuOR_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} AND V{0xY}.
@@ -703,15 +640,10 @@ snek8_cpuOR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x8XY2.
 * Code: AND V{0xX}, V{0xY}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuAND_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuAND_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} XOR V{0xY}.
@@ -719,15 +651,10 @@ snek8_cpuAND_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x8XY3.
 * Code: XOR VX, VY.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuXOR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuXOR_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} + V{0xY}, V{0xF} := carry.
@@ -735,15 +662,10 @@ snek8_cpuXOR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x8XY4.
 * Code: ADD V{0xX}, V{0xY}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuADD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuADD_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xX} - V{0xY}, V{0xF} := NOT borrow.
@@ -751,15 +673,10 @@ snek8_cpuADD_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x8XY5.
 * Code: SUB V{0xX}, V{0xY}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSUB_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSUB_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Sets the value of register V{0xX} to V{0xY} - V{0xX}, V{0xF} := NOT borrow.
@@ -767,15 +684,10 @@ snek8_cpuSUB_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x8XY7.
 * Code: SUBN V{0xX}, V{0xY}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -788,15 +700,10 @@ snek8_cpuSUBN_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x8XY6.
 * Code: SHR V{0xX}, V{0xY}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSHR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSHR_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -807,15 +714,10 @@ snek8_cpuSHR_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0x8XYE.
 * Code: SHL V{0xX}, V{0xY}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSHL_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSHL_VX_VY(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Sets the value of the index register to the given address.
@@ -823,15 +725,10 @@ snek8_cpuSHL_VX_VY(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xANNN.
 * Code: LD I, 0x0NNN.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_I_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_I_ADDR(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -843,15 +740,10 @@ snek8_cpuLD_I_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
 *
 * @see SNEK8_IMPLM_MODE_BNNN_USES_VX.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Generate a random 8-bit integer and performs a bitwise and operation with the
@@ -860,15 +752,10 @@ snek8_cpuJP_V0_ADDR(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xCXKK.
 * Code: RND V{0xX}, 0xKK
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuRND_VX_BYTE(Snek8CPU* cpu, uint16_t opcode);
 
 static inline uint8_t*
 snek8_cpuGetPixel(Snek8CPU* cpu, size_t x, size_t y){
@@ -883,14 +770,9 @@ snek8_cpuGetPixel(Snek8CPU* cpu, size_t x, size_t y){
 * Opcode: 0xDXYN.
 * DRW V{0xX}, V{0xY}, 0xN
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 *
-* @note The Chip8's oroginal screen has 32x64 pixels. In our implementation, we represent
+* @note The Chip8's original screen has 32x64 pixels. In our implementation, we represent
 * the screen as a contiguous block of 8-bit integers that can either be activated (1)
 * or deactivated (0), representing thus the black-white color scheme dealt by CHIP8.
 *
@@ -918,7 +800,7 @@ snek8_cpuGetPixel(Snek8CPU* cpu, size_t x, size_t y){
 *
 */
 enum Snek8ExecutionOutput
-snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Skip the next instruction if the key V{0xX} is pressed.
@@ -926,15 +808,10 @@ snek8_cpuDRW_VX_VY_N(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xEX9E.
 * Code: SKP V{0xX}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSKP_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSKP_VX(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Skip the next instruction if the key V{0xX} is not pressed.
@@ -942,15 +819,10 @@ snek8_cpuSKP_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xEXA1.
 * Code: SKNP V{0xX}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuSKNP_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuSKNP_VX(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Set V{0xX} to the value held at the delay time register.
@@ -958,15 +830,10 @@ snek8_cpuSKNP_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xFX07.
 * Code: LD V{0xX}, DT.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_DT(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_VX_DT(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Listen for a key press and store its index in the register V{0xX}.
@@ -974,15 +841,10 @@ snek8_cpuLD_VX_DT(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xFX0A.
 * Code: LD V{0xX}, 0xK.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_K(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_VX_K(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Set the delay timer register to V{0xX}.
@@ -990,15 +852,10 @@ snek8_cpuLD_VX_K(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xFX15.
 * Code: LD DT, V{0xX}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_DT_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_DT_VX(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Set the sound timer register to V{0xX}.
@@ -1006,15 +863,10 @@ snek8_cpuLD_DT_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xFX18.
 * Code: LD ST, V{0xX}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_ST_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_ST_VX(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief Set I := I + V{0xX}.
@@ -1022,15 +874,10 @@ snek8_cpuLD_ST_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xFX1E.
 * Code: ADD I, V{0xX}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuADD_I_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuADD_I_VX(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief The value of I is set to the location for the sprite representing the character
@@ -1039,15 +886,10 @@ snek8_cpuADD_I_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xFX29.
 * Code: LD F, V{0xX}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_F_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_F_VX(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief  Store BCD representation of V{0xX} in memory locations I, I+1, and I+2.
@@ -1055,29 +897,10 @@ snek8_cpuLD_F_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 * Opcode: 0xFX33
 * Code: LD B, V{0xX}.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
-*
-* @note The Binary Coded Representation of a number (assumed written in the
-* decimal base) represent it by representing each of its decimal digit to binary.
-*
-* Example
-* -------
-* Consider the number 1732. Then the BCD representation of such number is
-                      8  4  2  1
-                ---+-------------
-*                1 |  0  0  0  1
-*                7 |  0  1  1  1
-*                3 |  0  0  1  1
-*                2 |  0  0  1  0
-*
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_B_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_B_VX(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -1091,15 +914,10 @@ snek8_cpuLD_B_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 *
 * @see SNEK8_IMPLM_MODE_FX_CHANGES_I.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, uint16_t opcode);
 
 /**
 * @brief This instruction is ambiguous. It either
@@ -1113,15 +931,10 @@ snek8_cpuLD_I_V0_VX(Snek8CPU* cpu, uint16_t opcode, char* code);
 *
 * @see SNEK8_IMPLM_MODE_FX_CHANGES_I.
 *
-* @param `cpu`
-* @param `opcode`
-* @param `code`
-* @return A code representation on whether the execution was sucesseful.
-* @note This function will return `SNEK8_EXECOUT_EMPTY_STRUCT` if the cpu pointer is
-*       empty.
+* @return Always returns `SNEK8_EXECOUT_SUCCESS`.
 */
 enum Snek8ExecutionOutput
-snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, uint16_t opcode, char* code);
+snek8_cpuLD_VX_V0_I(Snek8CPU* cpu, uint16_t opcode);
 
 #ifdef __cplusplus
     }

@@ -582,7 +582,7 @@ _snek8_emulatorExecOpc(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
     Snek8Instruction instruction = snek8_opcodeDecode((uint16_t) code);
-    enum Snek8ExecutionOutput out = instruction.exec(&CAST_PTR(Snek8Emulator, self)->ob_cpu, code, instruction.code);
+    enum Snek8ExecutionOutput out = instruction.exec(&CAST_PTR(Snek8Emulator, self)->ob_cpu, code);
     return PyLong_FromLong((long) out);
 }
 

@@ -691,7 +691,6 @@ snek8_opcodeDecode(uint16_t opcode){
     uint8_t msq = snek8_opcodeGetNibble(opcode, 3);
     uint8_t lsq = snek8_opcodeGetNibble(opcode, 0);
     uint8_t iq1 = snek8_opcodeGetNibble(opcode, 1);
-    uint8_t iq22 = snek8_opcodeGetNibble(opcode, 2);
     switch (msq) {
         case 0x0:
             switch (lsq) {

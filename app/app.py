@@ -195,7 +195,6 @@ class Snek8App(QApplication):
 
     def handleSound(self, soundtimer: int) -> None:
         pass
-        # QSoundEffect()
 
     def setStatusBarPaused(self) -> None:
         self.snek8_main_win.status_bar.setText(self.STATUS_BAR_PAUSED)
